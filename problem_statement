@@ -1,0 +1,3 @@
+Problem Statement
+
+Develop an AI-assisted system that analyzes large Python and C++ code repositories, automatically identifies potential bugs or risky patterns, and generates minimal, context-aware patch suggestions while considering cross-file dependencies within the repository.

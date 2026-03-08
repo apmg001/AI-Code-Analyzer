@@ -1,0 +1,1 @@
+print("Hello this is the starting file of the project")
