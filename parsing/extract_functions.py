@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     from ingestion.scan_files import scan_python_files
 
-    repo_path = "repos/flask"
+    repo_path = "ingestion/repos/flask"
 
     print("[INFO] Scanning repository for Python files...")
 
