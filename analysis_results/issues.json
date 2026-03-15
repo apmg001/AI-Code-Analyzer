@@ -4,22 +4,18 @@
     "severity": "high",
     "function": "from_pyfile",
     "file": "repos/flask/src/flask/config.py",
+    "line_number": 23,
+    "code_snippet": "exec(compile(config_file.read(), filename, \"exec\"), d.__dict__)",
     "chunk_id": "chunk_1096",
     "message": "Use of exec() detected. This may allow arbitrary code execution."
-  },
-  {
-    "type": "eval_usage",
-    "severity": "high",
-    "function": "find_app_by_string",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "chunk_1125",
-    "message": "Use of eval() detected. This may lead to security risks."
   },
   {
     "type": "potential_infinite_loop",
     "severity": "medium",
     "function": "prepare_import",
     "file": "repos/flask/src/flask/cli.py",
+    "line_number": 17,
+    "code_snippet": "while True:",
     "chunk_id": "chunk_1126",
     "message": "Possible infinite loop detected (while True)."
   },
@@ -28,6 +24,8 @@
     "severity": "high",
     "function": "shell_command",
     "file": "repos/flask/src/flask/cli.py",
+    "line_number": 23,
+    "code_snippet": "eval(compile(f.read(), startup, \"exec\"), ctx)",
     "chunk_id": "chunk_1140",
     "message": "Use of eval() detected. This may lead to security risks."
   },
@@ -36,6 +34,8 @@
     "severity": "low",
     "function": "__init__",
     "file": "repos/flask/src/flask/app.py",
+    "line_number": 43,
+    "code_snippet": "assert bool(static_host) == host_matching, (",
     "chunk_id": "chunk_1177",
     "message": "Assertion used in code. This may cause runtime failures."
   },
@@ -44,6 +44,8 @@
     "severity": "low",
     "function": "test_client",
     "file": "repos/flask/src/flask/app.py",
+    "line_number": 22,
+    "code_snippet": "assert request.args['vodka'] == '42'",
     "chunk_id": "chunk_1188",
     "message": "Assertion used in code. This may cause runtime failures."
   },
@@ -52,6 +54,8 @@
     "severity": "low",
     "function": "__init__",
     "file": "repos/flask/src/flask/debughelpers.py",
+    "line_number": 3,
+    "code_snippet": "assert isinstance(exc, RequestRedirect)",
     "chunk_id": "chunk_1216",
     "message": "Assertion used in code. This may cause runtime failures."
   },
@@ -60,6 +64,8 @@
     "severity": "low",
     "function": "__init__",
     "file": "repos/flask/src/flask/testing.py",
+    "line_number": 11,
+    "code_snippet": "assert not (base_url or subdomain or url_scheme) or (",
     "chunk_id": "chunk_1247",
     "message": "Assertion used in code. This may cause runtime failures."
   },
@@ -68,6 +74,8 @@
     "severity": "low",
     "function": "dispatch_request",
     "file": "repos/flask/src/flask/views.py",
+    "line_number": 9,
+    "code_snippet": "assert meth is not None, f\"Unimplemented method {request.method!r}\"",
     "chunk_id": "chunk_1284",
     "message": "Assertion used in code. This may cause runtime failures."
   },
@@ -76,6 +84,8 @@
     "severity": "low",
     "function": "_endpoint_from_view_func",
     "file": "repos/flask/src/flask/sansio/scaffold.py",
+    "line_number": 5,
+    "code_snippet": "assert view_func is not None, \"expected view func if endpoint is not provided.\"",
     "chunk_id": "chunk_1367",
     "message": "Assertion used in code. This may cause runtime failures."
   }

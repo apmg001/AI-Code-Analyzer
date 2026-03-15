@@ -17,8 +17,8 @@ Responsibilities
 """
 
 import re
+import ast
 from typing import List, Dict
-
 
 class BugDetector:
     """
@@ -50,6 +50,7 @@ class BugDetector:
         issues = []
 
         for rule in self.rules:
+
             result = rule(chunk)
 
             if result:
@@ -79,13 +80,27 @@ class BugDetector:
 
     def _scan_lines(self, chunk: Dict):
         """
-        Split chunk code into numbered lines.
+        Split chunk code into numbered lines and skip empty/comment lines.
         """
 
         code = chunk["code"]
         lines = code.split("\n")
 
-        return list(enumerate(lines, start=1))
+        result = []
+
+        for i, line in enumerate(lines, start=1):
+
+            stripped = line.strip()
+
+            if not stripped:
+                continue
+
+            if stripped.startswith("#"):
+                continue
+
+            result.append((i, line))
+
+        return result
 
     def _build_issue(
         self,
@@ -137,12 +152,21 @@ class BugDetector:
         return issues
 
     def _detect_eval_usage(self, chunk: Dict) -> List[Dict]:
+        """
+        Detect real usage of eval().
+
+        Avoids false positives like:
+        - ast.literal_eval()
+        - some_eval_function()
+        """
 
         issues = []
 
+        pattern = r"\beval\s*\("
+
         for line_number, line in self._scan_lines(chunk):
 
-            if "eval(" in line:
+            if re.search(pattern, line):
 
                 issues.append(
                     self._build_issue(
@@ -161,9 +185,11 @@ class BugDetector:
 
         issues = []
 
+        pattern = r"\bexec\s*\("
+
         for line_number, line in self._scan_lines(chunk):
 
-            if "exec(" in line:
+            if re.search(pattern, line):
 
                 issues.append(
                     self._build_issue(
@@ -181,21 +207,43 @@ class BugDetector:
     def _detect_infinite_loop(self, chunk: Dict) -> List[Dict]:
 
         issues = []
+        code = chunk["code"]
 
-        for line_number, line in self._scan_lines(chunk):
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return issues
 
-            if "while True" in line:
+        for node in ast.walk(tree):
 
-                issues.append(
-                    self._build_issue(
-                        chunk,
-                        line_number,
-                        line,
-                        "potential_infinite_loop",
-                        "medium",
-                        "Possible infinite loop detected (while True)."
-                    )
-                )
+            if isinstance(node, ast.While):
+
+                # detect "while True"
+                if isinstance(node.test, ast.Constant) and node.test.value is True:
+
+                    has_exit = False
+
+                    for child in ast.walk(node):
+
+                        if isinstance(child, (ast.Break, ast.Return, ast.Raise)):
+                            has_exit = True
+                            break
+
+                    if not has_exit:
+
+                        line_number = node.lineno
+                        code_lines = code.split("\n")
+
+                        issues.append(
+                            self._build_issue(
+                                chunk,
+                                line_number,
+                                code_lines[line_number - 1],
+                                "potential_infinite_loop",
+                                "medium",
+                                "While loop with constant True and no exit condition detected."
+                            )
+                        )
 
         return issues
 
