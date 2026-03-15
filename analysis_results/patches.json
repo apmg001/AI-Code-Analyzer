@@ -1,0 +1,92 @@
+[
+  {
+    "function": "from_pyfile",
+    "file": "repos/flask/src/flask/config.py",
+    "chunk_id": "chunk_1096",
+    "issue_type": "exec_usage",
+    "severity": "high",
+    "original_code": "    def from_pyfile(\n        self, filename: str | os.PathLike[str], silent: bool = False\n    ) -> bool:\n        \"\"\"Updates the values in the config from a Python file.  This function\n        behaves as if the file was imported as module with the\n        :meth:`from_object` function.\n\n        :param filename: the filename of the config.  This can either be an\n                         absolute filename or a filename relative to the\n                         root path.\n        :param silent: set to ``True`` if you want silent failure for missing\n                       files.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 0.7\n           `silent` parameter.\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n        d = types.ModuleType(\"config\")\n        d.__file__ = filename\n        try:\n            with open(filename, mode=\"rb\") as config_file:\n                exec(compile(config_file.read(), filename, \"exec\"), d.__dict__)\n        except OSError as e:\n            if silent and e.errno in (errno.ENOENT, errno.EISDIR, errno.ENOTDIR):\n                return False\n            e.strerror = f\"Unable to load configuration file ({e.strerror})\"\n            raise\n        self.from_object(d)\n        return True\n",
+    "suggested_fix": "Avoid using exec(). Refactor logic into callable functions or structured control flow."
+  },
+  {
+    "function": "find_app_by_string",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1125",
+    "issue_type": "eval_usage",
+    "severity": "high",
+    "original_code": "def find_app_by_string(module: ModuleType, app_name: str) -> Flask:\n    \"\"\"Check if the given string is a variable name or a function. Call\n    a function to get the app instance, or return the variable directly.\n    \"\"\"\n    from . import Flask\n\n    # Parse app_name as a single expression to determine if it's a valid\n    # attribute name or function call.\n    try:\n        expr = ast.parse(app_name.strip(), mode=\"eval\").body\n    except SyntaxError:\n        raise NoAppException(\n            f\"Failed to parse {app_name!r} as an attribute name or function call.\"\n        ) from None\n\n    if isinstance(expr, ast.Name):\n        name = expr.id\n        args = []\n        kwargs = {}\n    elif isinstance(expr, ast.Call):\n        # Ensure the function name is an attribute name only.\n        if not isinstance(expr.func, ast.Name):\n            raise NoAppException(\n                f\"Function reference must be a simple name: {app_name!r}.\"\n            )\n\n        name = expr.func.id\n\n        # Parse the positional and keyword arguments as literals.\n        try:\n            args = [ast.literal_eval(arg) for arg in expr.args]\n            kwargs = {\n                kw.arg: ast.literal_eval(kw.value)\n                for kw in expr.keywords\n                if kw.arg is not None\n            }\n        except ValueError:\n            # literal_eval gives cryptic error messages, show a generic\n            # message with the full expression instead.\n            raise NoAppException(\n                f\"Failed to parse arguments as literal values: {app_name!r}.\"\n            ) from None\n    else:\n        raise NoAppException(\n            f\"Failed to parse {app_name!r} as an attribute name or function call.\"\n        )\n\n    try:\n        attr = getattr(module, name)\n    except AttributeError as e:\n        raise NoAppException(\n            f\"Failed to find attribute {name!r} in {module.__name__!r}.\"\n        ) from e\n\n    # If the attribute is a function, call it with any args and kwargs\n    # to get the real application.\n    if inspect.isfunction(attr):\n        try:\n            app = attr(*args, **kwargs)\n        except TypeError as e:\n            if not _called_with_wrong_args(attr):\n                raise\n\n            raise NoAppException(\n                f\"The factory {app_name!r} in module\"\n                f\" {module.__name__!r} could not be called with the\"\n                \" specified arguments.\"\n            ) from e\n    else:\n        app = attr\n\n    if isinstance(app, Flask):\n        return app\n\n    raise NoAppException(\n        \"A valid Flask application was not obtained from\"\n        f\" '{module.__name__}:{app_name}'.\"\n    )\n",
+    "suggested_fix": "Avoid using eval(). Consider safer alternatives such as:\n\u2022 ast.literal_eval()\n\u2022 explicit parsing logic"
+  },
+  {
+    "function": "prepare_import",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1126",
+    "issue_type": "potential_infinite_loop",
+    "severity": "medium",
+    "original_code": "def prepare_import(path: str) -> str:\n    \"\"\"Given a filename this will try to calculate the python path, add it\n    to the search path and return the actual module name that is expected.\n    \"\"\"\n    path = os.path.realpath(path)\n\n    fname, ext = os.path.splitext(path)\n    if ext == \".py\":\n        path = fname\n\n    if os.path.basename(path) == \"__init__\":\n        path = os.path.dirname(path)\n\n    module_name = []\n\n    # move up until outside package structure (no __init__.py)\n    while True:\n        path, name = os.path.split(path)\n        module_name.append(name)\n\n        if not os.path.exists(os.path.join(path, \"__init__.py\")):\n            break\n\n    if sys.path[0] != path:\n        sys.path.insert(0, path)\n\n    return \".\".join(module_name[::-1])\n",
+    "suggested_fix": "Ensure loop has a clear termination condition.\n\nExample:\nwhile condition:\n    ...\n"
+  },
+  {
+    "function": "shell_command",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1140",
+    "issue_type": "eval_usage",
+    "severity": "high",
+    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)\n",
+    "suggested_fix": "Avoid using eval(). Consider safer alternatives such as:\n\u2022 ast.literal_eval()\n\u2022 explicit parsing logic"
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "chunk_1177",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "    def __init__(\n        self,\n        import_name: str,\n        static_url_path: str | None = None,\n        static_folder: str | os.PathLike[str] | None = \"static\",\n        static_host: str | None = None,\n        host_matching: bool = False,\n        subdomain_matching: bool = False,\n        template_folder: str | os.PathLike[str] | None = \"templates\",\n        instance_path: str | None = None,\n        instance_relative_config: bool = False,\n        root_path: str | None = None,\n    ):\n        super().__init__(\n            import_name=import_name,\n            static_url_path=static_url_path,\n            static_folder=static_folder,\n            static_host=static_host,\n            host_matching=host_matching,\n            subdomain_matching=subdomain_matching,\n            template_folder=template_folder,\n            instance_path=instance_path,\n            instance_relative_config=instance_relative_config,\n            root_path=root_path,\n        )\n\n        #: The Click command group for registering CLI commands for this\n        #: object. The commands are available from the ``flask`` command\n        #: once the application has been discovered and blueprints have\n        #: been registered.\n        self.cli = cli.AppGroup()\n\n        # Set the name of the Click group in case someone wants to add\n        # the app's commands to another CLI tool.\n        self.cli.name = self.name\n\n        # Add a static route using the provided static_url_path, static_host,\n        # and static_folder if there is a configured static_folder.\n        # Note we do this without checking if static_folder exists.\n        # For one, it might be created while the server is running (e.g. during\n        # development). Also, Google App Engine stores static files somewhere\n        if self.has_static_folder:\n            assert bool(static_host) == host_matching, (\n                \"Invalid static_host/host_matching combination\"\n            )\n            # Use a weakref to avoid creating a reference cycle between the app\n            # and the view function (see #3761).\n            self_ref = weakref.ref(self)\n            self.add_url_rule(\n                f\"{self.static_url_path}/<path:filename>\",\n                endpoint=\"static\",\n                host=static_host,\n                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore\n            )\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  },
+  {
+    "function": "test_client",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "chunk_1188",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "    def test_client(self, use_cookies: bool = True, **kwargs: t.Any) -> FlaskClient:\n        \"\"\"Creates a test client for this application.  For information\n        about unit testing head over to :doc:`/testing`.\n\n        Note that if you are testing for assertions or exceptions in your\n        application code, you must set ``app.testing = True`` in order for the\n        exceptions to propagate to the test client.  Otherwise, the exception\n        will be handled by the application (not visible to the test client) and\n        the only indication of an AssertionError or other exception will be a\n        500 status code response to the test client.  See the :attr:`testing`\n        attribute.  For example::\n\n            app.testing = True\n            client = app.test_client()\n\n        The test client can be used in a ``with`` block to defer the closing down\n        of the context until the end of the ``with`` block.  This is useful if\n        you want to access the context locals for testing::\n\n            with app.test_client() as c:\n                rv = c.get('/?vodka=42')\n                assert request.args['vodka'] == '42'\n\n        Additionally, you may pass optional keyword arguments that will then\n        be passed to the application's :attr:`test_client_class` constructor.\n        For example::\n\n            from flask.testing import FlaskClient\n\n            class CustomClient(FlaskClient):\n                def __init__(self, *args, **kwargs):\n                    self._authentication = kwargs.pop(\"authentication\")\n                    super(CustomClient,self).__init__( *args, **kwargs)\n\n            app.test_client_class = CustomClient\n            client = app.test_client(authentication='Basic ....')\n\n        See :class:`~flask.testing.FlaskClient` for more information.\n\n        .. versionchanged:: 0.4\n           added support for ``with`` block usage for the client.\n\n        .. versionadded:: 0.7\n           The `use_cookies` parameter was added as well as the ability\n           to override the client to be used by setting the\n           :attr:`test_client_class` attribute.\n\n        .. versionchanged:: 0.11\n           Added `**kwargs` to support passing additional keyword arguments to\n           the constructor of :attr:`test_client_class`.\n        \"\"\"\n        cls = self.test_client_class\n        if cls is None:\n            from .testing import FlaskClient as cls\n        return cls(  # type: ignore\n            self, self.response_class, use_cookies=use_cookies, **kwargs\n        )\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/debughelpers.py",
+    "chunk_id": "chunk_1216",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "    def __init__(self, request: Request) -> None:\n        exc = request.routing_exception\n        assert isinstance(exc, RequestRedirect)\n        buf = [\n            f\"A request was sent to '{request.url}', but routing issued\"\n            f\" a redirect to the canonical URL '{exc.new_url}'.\"\n        ]\n\n        if f\"{request.base_url}/\" == exc.new_url.partition(\"?\")[0]:\n            buf.append(\n                \" The URL was defined with a trailing slash. Flask\"\n                \" will redirect to the URL with a trailing slash if it\"\n                \" was accessed without one.\"\n            )\n\n        buf.append(\n            \" Send requests to the canonical URL, or use 307 or 308 for\"\n            \" routing redirects. Otherwise, browsers will drop form\"\n            \" data.\\n\\n\"\n            \"This exception is only raised in debug mode.\"\n        )\n        super().__init__(\"\".join(buf))\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/testing.py",
+    "chunk_id": "chunk_1247",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "    def __init__(\n        self,\n        app: Flask,\n        path: str = \"/\",\n        base_url: str | None = None,\n        subdomain: str | None = None,\n        url_scheme: str | None = None,\n        *args: t.Any,\n        **kwargs: t.Any,\n    ) -> None:\n        assert not (base_url or subdomain or url_scheme) or (\n            base_url is not None\n        ) != bool(subdomain or url_scheme), (\n            'Cannot pass \"subdomain\" or \"url_scheme\" with \"base_url\".'\n        )\n\n        if base_url is None:\n            http_host = app.config.get(\"SERVER_NAME\") or \"localhost\"\n            app_root = app.config[\"APPLICATION_ROOT\"]\n\n            if subdomain:\n                http_host = f\"{subdomain}.{http_host}\"\n\n            if url_scheme is None:\n                url_scheme = app.config[\"PREFERRED_URL_SCHEME\"]\n\n            url = urlsplit(path)\n            base_url = (\n                f\"{url.scheme or url_scheme}://{url.netloc or http_host}\"\n                f\"/{app_root.lstrip('/')}\"\n            )\n            path = url.path\n\n            if url.query:\n                path = f\"{path}?{url.query}\"\n\n        self.app = app\n        super().__init__(path, base_url, *args, **kwargs)\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  },
+  {
+    "function": "dispatch_request",
+    "file": "repos/flask/src/flask/views.py",
+    "chunk_id": "chunk_1284",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "    def dispatch_request(self, **kwargs: t.Any) -> ft.ResponseReturnValue:\n        meth = getattr(self, request.method.lower(), None)\n\n        # If the request method is HEAD and we don't have a handler for it\n        # retry with GET.\n        if meth is None and request.method == \"HEAD\":\n            meth = getattr(self, \"get\", None)\n\n        assert meth is not None, f\"Unimplemented method {request.method!r}\"\n        return current_app.ensure_sync(meth)(**kwargs)  # type: ignore[no-any-return]\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  },
+  {
+    "function": "_endpoint_from_view_func",
+    "file": "repos/flask/src/flask/sansio/scaffold.py",
+    "chunk_id": "chunk_1367",
+    "issue_type": "assert_usage",
+    "severity": "low",
+    "original_code": "def _endpoint_from_view_func(view_func: ft.RouteCallable) -> str:\n    \"\"\"Internal helper that returns the default endpoint for a given\n    function.  This always is the function name.\n    \"\"\"\n    assert view_func is not None, \"expected view func if endpoint is not provided.\"\n    return view_func.__name__\n",
+    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+  }
+]

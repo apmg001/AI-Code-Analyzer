@@ -1,0 +1,82 @@
+[
+  {
+    "type": "exec_usage",
+    "severity": "high",
+    "function": "from_pyfile",
+    "file": "repos/flask/src/flask/config.py",
+    "chunk_id": "chunk_1096",
+    "message": "Use of exec() detected. This may allow arbitrary code execution."
+  },
+  {
+    "type": "eval_usage",
+    "severity": "high",
+    "function": "find_app_by_string",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1125",
+    "message": "Use of eval() detected. This may lead to security risks."
+  },
+  {
+    "type": "potential_infinite_loop",
+    "severity": "medium",
+    "function": "prepare_import",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1126",
+    "message": "Possible infinite loop detected (while True)."
+  },
+  {
+    "type": "eval_usage",
+    "severity": "high",
+    "function": "shell_command",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "chunk_1140",
+    "message": "Use of eval() detected. This may lead to security risks."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "__init__",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "chunk_1177",
+    "message": "Assertion used in code. This may cause runtime failures."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "test_client",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "chunk_1188",
+    "message": "Assertion used in code. This may cause runtime failures."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "__init__",
+    "file": "repos/flask/src/flask/debughelpers.py",
+    "chunk_id": "chunk_1216",
+    "message": "Assertion used in code. This may cause runtime failures."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "__init__",
+    "file": "repos/flask/src/flask/testing.py",
+    "chunk_id": "chunk_1247",
+    "message": "Assertion used in code. This may cause runtime failures."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "dispatch_request",
+    "file": "repos/flask/src/flask/views.py",
+    "chunk_id": "chunk_1284",
+    "message": "Assertion used in code. This may cause runtime failures."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_endpoint_from_view_func",
+    "file": "repos/flask/src/flask/sansio/scaffold.py",
+    "chunk_id": "chunk_1367",
+    "message": "Assertion used in code. This may cause runtime failures."
+  }
+]

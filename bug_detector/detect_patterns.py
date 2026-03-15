@@ -1,20 +1,19 @@
-# bug_detector/detect_patterns.py
-
 """
 Module: detect_patterns
 
 Purpose
 -------
-Detect potential bugs or risky patterns inside extracted code chunks.
+Detect potentially risky patterns inside extracted code chunks.
 
-This module performs lightweight static analysis on function code
-to identify suspicious constructs before deeper AI reasoning is applied.
+This module performs lightweight static analysis using simple
+pattern rules before any deeper AI reasoning is applied.
 
 Responsibilities
 ----------------
 1. Receive code chunks
-2. Apply detection rules
-3. Return structured bug reports
+2. Scan code line-by-line
+3. Apply detection rules
+4. Return structured bug reports
 """
 
 import re
@@ -25,11 +24,12 @@ class BugDetector:
     """
     Rule-based bug detection engine.
 
-    Each rule inspects code and returns issues if patterns match.
+    Each rule inspects code and returns a list of issues if patterns match.
     """
 
     def __init__(self):
 
+        # Register detection rules here
         self.rules = [
             self._detect_division_by_zero,
             self._detect_eval_usage,
@@ -38,15 +38,18 @@ class BugDetector:
             self._detect_assert_usage
         ]
 
+    # ---------------------------------------------------------
+    # Public API
+    # ---------------------------------------------------------
+
     def analyze_chunk(self, chunk: Dict) -> List[Dict]:
         """
-        Run all rules on a single code chunk.
+        Run all detection rules on a single chunk.
         """
 
         issues = []
 
         for rule in self.rules:
-
             result = rule(chunk)
 
             if result:
@@ -56,7 +59,7 @@ class BugDetector:
 
     def analyze_chunks(self, chunks: List[Dict]) -> List[Dict]:
         """
-        Analyze multiple chunks.
+        Run detection on multiple chunks.
         """
 
         detected_issues = []
@@ -70,28 +73,66 @@ class BugDetector:
 
         return detected_issues
 
-    # ----------------------------
+    # ---------------------------------------------------------
+    # Utility Methods
+    # ---------------------------------------------------------
+
+    def _scan_lines(self, chunk: Dict):
+        """
+        Split chunk code into numbered lines.
+        """
+
+        code = chunk["code"]
+        lines = code.split("\n")
+
+        return list(enumerate(lines, start=1))
+
+    def _build_issue(
+        self,
+        chunk: Dict,
+        line_number: int,
+        code_line: str,
+        issue_type: str,
+        severity: str,
+        message: str
+    ) -> Dict:
+        """
+        Standard issue object builder.
+        """
+
+        return {
+            "type": issue_type,
+            "severity": severity,
+            "function": chunk["function_name"],
+            "file": chunk["file_path"],
+            "line_number": line_number,
+            "code_snippet": code_line.strip(),
+            "chunk_id": chunk["chunk_id"],
+            "message": message
+        }
+
+    # ---------------------------------------------------------
     # Detection Rules
-    # ----------------------------
+    # ---------------------------------------------------------
 
     def _detect_division_by_zero(self, chunk: Dict) -> List[Dict]:
 
         issues = []
 
-        code = chunk["code"]
+        for line_number, line in self._scan_lines(chunk):
 
-        pattern = r"/\s*0"
+            if re.search(r"/\s*0", line):
 
-        if re.search(pattern, code):
-
-            issues.append({
-                "type": "division_by_zero",
-                "severity": "high",
-                "function": chunk["function_name"],
-                "file": chunk["file_path"],
-                "chunk_id": chunk["chunk_id"],
-                "message": "Possible division by zero detected."
-            })
+                issues.append(
+                    self._build_issue(
+                        chunk,
+                        line_number,
+                        line,
+                        "division_by_zero",
+                        "high",
+                        "Possible division by zero detected."
+                    )
+                )
 
         return issues
 
@@ -99,18 +140,20 @@ class BugDetector:
 
         issues = []
 
-        code = chunk["code"]
+        for line_number, line in self._scan_lines(chunk):
 
-        if "eval(" in code:
+            if "eval(" in line:
 
-            issues.append({
-                "type": "eval_usage",
-                "severity": "high",
-                "function": chunk["function_name"],
-                "file": chunk["file_path"],
-                "chunk_id": chunk["chunk_id"],
-                "message": "Use of eval() detected. This may lead to security risks."
-            })
+                issues.append(
+                    self._build_issue(
+                        chunk,
+                        line_number,
+                        line,
+                        "eval_usage",
+                        "high",
+                        "Use of eval() detected. This may lead to security risks."
+                    )
+                )
 
         return issues
 
@@ -118,18 +161,20 @@ class BugDetector:
 
         issues = []
 
-        code = chunk["code"]
+        for line_number, line in self._scan_lines(chunk):
 
-        if "exec(" in code:
+            if "exec(" in line:
 
-            issues.append({
-                "type": "exec_usage",
-                "severity": "high",
-                "function": chunk["function_name"],
-                "file": chunk["file_path"],
-                "chunk_id": chunk["chunk_id"],
-                "message": "Use of exec() detected. This may allow arbitrary code execution."
-            })
+                issues.append(
+                    self._build_issue(
+                        chunk,
+                        line_number,
+                        line,
+                        "exec_usage",
+                        "high",
+                        "Use of exec() detected. This may allow arbitrary code execution."
+                    )
+                )
 
         return issues
 
@@ -137,18 +182,20 @@ class BugDetector:
 
         issues = []
 
-        code = chunk["code"]
+        for line_number, line in self._scan_lines(chunk):
 
-        if "while True" in code:
+            if "while True" in line:
 
-            issues.append({
-                "type": "potential_infinite_loop",
-                "severity": "medium",
-                "function": chunk["function_name"],
-                "file": chunk["file_path"],
-                "chunk_id": chunk["chunk_id"],
-                "message": "Possible infinite loop detected (while True)."
-            })
+                issues.append(
+                    self._build_issue(
+                        chunk,
+                        line_number,
+                        line,
+                        "potential_infinite_loop",
+                        "medium",
+                        "Possible infinite loop detected (while True)."
+                    )
+                )
 
         return issues
 
@@ -156,25 +203,29 @@ class BugDetector:
 
         issues = []
 
-        code = chunk["code"]
+        for line_number, line in self._scan_lines(chunk):
 
-        if "assert " in code:
+            if "assert " in line:
 
-            issues.append({
-                "type": "assert_usage",
-                "severity": "low",
-                "function": chunk["function_name"],
-                "file": chunk["file_path"],
-                "chunk_id": chunk["chunk_id"],
-                "message": "Assertion used in code. This may cause runtime failures."
-            })
+                issues.append(
+                    self._build_issue(
+                        chunk,
+                        line_number,
+                        line,
+                        "assert_usage",
+                        "low",
+                        "Assertion used in code. This may cause runtime failures."
+                    )
+                )
 
         return issues
 
 
-if __name__ == "__main__":
+# ---------------------------------------------------------
+# Local Testing Block
+# ---------------------------------------------------------
 
-    # Local testing block
+if __name__ == "__main__":
 
     from ingestion.scan_files import scan_python_files
     from parsing.extract_function_code import extract_functions_from_files
@@ -212,5 +263,7 @@ if __name__ == "__main__":
         print("Severity:", issue["severity"])
         print("Function:", issue["function"])
         print("File:", issue["file"])
+        print("Line:", issue["line_number"])
+        print("Code:", issue["code_snippet"])
         print("Message:", issue["message"])
-        print("-" * 50)
+        print("-" * 60)
