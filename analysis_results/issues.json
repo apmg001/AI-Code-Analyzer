@@ -1,92 +1,2072 @@
 [
   {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "cohen_kappa_score",
+    "file": "repos/scikit-learn/sklearn/metrics/_classification.py",
+    "line_number": 74,
+    "code_snippet": "<10.1177/001316446002000104>`",
+    "chunk_id": "chunk_0787",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "d2_pinball_score",
+    "file": "repos/scikit-learn/sklearn/metrics/_regression.py",
+    "line_number": 69,
+    "code_snippet": "<https://doi.org/10.1080/01621459.1999.10473882>`_",
+    "chunk_id": "chunk_0832",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "silhouette_score",
+    "file": "repos/scikit-learn/sklearn/metrics/cluster/_unsupervised.py",
+    "line_number": 65,
+    "code_snippet": "<https://www.sciencedirect.com/science/article/pii/0377042787901257>`_",
+    "chunk_id": "chunk_0899",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "silhouette_samples",
+    "file": "repos/scikit-learn/sklearn/metrics/cluster/_unsupervised.py",
+    "line_number": 58,
+    "code_snippet": "<https://www.sciencedirect.com/science/article/pii/0377042787901257>`_",
+    "chunk_id": "chunk_0901",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "calinski_harabasz_score",
+    "file": "repos/scikit-learn/sklearn/metrics/cluster/_unsupervised.py",
+    "line_number": 29,
+    "code_snippet": "<https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_",
+    "chunk_id": "chunk_0902",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "fowlkes_mallows_score",
+    "file": "repos/scikit-learn/sklearn/metrics/cluster/_supervised.py",
+    "line_number": 49,
+    "code_snippet": "<https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_",
+    "chunk_id": "chunk_0917",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_find_binning_thresholds",
+    "file": "repos/scikit-learn/sklearn/ensemble/_hist_gradient_boosting/binning.py",
+    "line_number": 62,
+    "code_snippet": "assert bin_thresholds.shape[0] == max_bins - 1",
+    "chunk_id": "chunk_2130",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_find_binning_thresholds",
+    "file": "repos/scikit-learn/sklearn/ensemble/_hist_gradient_boosting/binning.py",
+    "line_number": 72,
+    "code_snippet": "assert bin_thresholds.shape[0] == max_bins - 1",
+    "chunk_id": "chunk_2130",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "linkage_tree",
+    "file": "repos/scikit-learn/sklearn/cluster/_agglomerative.py",
+    "line_number": 191,
+    "code_snippet": "assert n_clusters <= n_samples",
+    "chunk_id": "chunk_2352",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "load_csv_data",
+    "file": "repos/scikit-learn/sklearn/datasets/_base.py",
+    "line_number": 70,
+    "code_snippet": "assert descr_module is not None",
+    "chunk_id": "chunk_3543",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "load_gzip_compressed_csv_data",
+    "file": "repos/scikit-learn/sklearn/datasets/_base.py",
+    "line_number": 61,
+    "code_snippet": "assert descr_module is not None",
+    "chunk_id": "chunk_3544",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "fetch_species_distributions",
+    "file": "repos/scikit-learn/sklearn/datasets/_species_distributions.py",
+    "line_number": 66,
+    "code_snippet": "<http://www.iucnredlist.org/details/3038/0>`_ ,",
+    "chunk_id": "chunk_3591",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "fetch_species_distributions",
+    "file": "repos/scikit-learn/sklearn/datasets/_species_distributions.py",
+    "line_number": 70,
+    "code_snippet": "<http://www.iucnredlist.org/details/13408/0>`_ ,",
+    "chunk_id": "chunk_3591",
+    "message": "Possible division by zero detected."
+  },
+  {
     "type": "exec_usage",
     "severity": "high",
-    "function": "from_pyfile",
-    "file": "repos/flask/src/flask/config.py",
-    "line_number": 23,
-    "code_snippet": "exec(compile(config_file.read(), filename, \"exec\"), d.__dict__)",
-    "chunk_id": "chunk_1096",
-    "message": "Use of exec() detected. This may allow arbitrary code execution."
-  },
-  {
-    "type": "potential_infinite_loop",
-    "severity": "medium",
-    "function": "prepare_import",
-    "file": "repos/flask/src/flask/cli.py",
-    "line_number": 17,
-    "code_snippet": "while True:",
-    "chunk_id": "chunk_1126",
-    "message": "Possible infinite loop detected (while True)."
-  },
-  {
-    "type": "eval_usage",
-    "severity": "high",
-    "function": "shell_command",
-    "file": "repos/flask/src/flask/cli.py",
-    "line_number": 23,
-    "code_snippet": "eval(compile(f.read(), startup, \"exec\"), ctx)",
-    "chunk_id": "chunk_1140",
-    "message": "Use of eval() detected. This may lead to security risks."
-  },
-  {
-    "type": "assert_usage",
-    "severity": "low",
-    "function": "__init__",
-    "file": "repos/flask/src/flask/app.py",
-    "line_number": 43,
-    "code_snippet": "assert bool(static_host) == host_matching, (",
-    "chunk_id": "chunk_1177",
-    "message": "Assertion used in code. This may cause runtime failures."
-  },
-  {
-    "type": "assert_usage",
-    "severity": "low",
-    "function": "test_client",
-    "file": "repos/flask/src/flask/app.py",
-    "line_number": 22,
-    "code_snippet": "assert request.args['vodka'] == '42'",
-    "chunk_id": "chunk_1188",
-    "message": "Assertion used in code. This may cause runtime failures."
-  },
-  {
-    "type": "assert_usage",
-    "severity": "low",
-    "function": "__init__",
-    "file": "repos/flask/src/flask/debughelpers.py",
-    "line_number": 3,
-    "code_snippet": "assert isinstance(exc, RequestRedirect)",
-    "chunk_id": "chunk_1216",
-    "message": "Assertion used in code. This may cause runtime failures."
-  },
-  {
-    "type": "assert_usage",
-    "severity": "low",
-    "function": "__init__",
-    "file": "repos/flask/src/flask/testing.py",
-    "line_number": 11,
-    "code_snippet": "assert not (base_url or subdomain or url_scheme) or (",
-    "chunk_id": "chunk_1247",
-    "message": "Assertion used in code. This may cause runtime failures."
-  },
-  {
-    "type": "assert_usage",
-    "severity": "low",
-    "function": "dispatch_request",
-    "file": "repos/flask/src/flask/views.py",
+    "function": "clone_module",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_compat/_internal.py",
     "line_number": 9,
-    "code_snippet": "assert meth is not None, f\"Unimplemented method {request.method!r}\"",
-    "chunk_id": "chunk_1284",
-    "message": "Assertion used in code. This may cause runtime failures."
+    "code_snippet": "exec(f\"from {mod.__name__} import *\", objs)",
+    "chunk_id": "chunk_3894",
+    "message": "Direct exec() call detected. This may allow arbitrary code execution."
   },
   {
     "type": "assert_usage",
     "severity": "low",
-    "function": "_endpoint_from_view_func",
-    "file": "repos/flask/src/flask/sansio/scaffold.py",
-    "line_number": 5,
-    "code_snippet": "assert view_func is not None, \"expected view func if endpoint is not provided.\"",
-    "chunk_id": "chunk_1367",
-    "message": "Assertion used in code. This may cause runtime failures."
+    "function": "clip",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_compat/common/_aliases.py",
+    "line_number": 49,
+    "code_snippet": "assert out is not None  # workaround for a type-narrowing issue in pyright",
+    "chunk_id": "chunk_4101",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_compat_module_name",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_compat/common/_helpers.py",
+    "line_number": 2,
+    "code_snippet": "assert __name__.endswith(\".common._helpers\")",
+    "chunk_id": "chunk_4129",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "patch_lazy_xp_functions",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/testing.py",
+    "line_number": 66,
+    "code_snippet": "assert hasattr(mod, name)",
+    "chunk_id": "chunk_4172",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_lazy_apply_wrapper",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_lazy.py",
+    "line_number": 33,
+    "code_snippet": "assert device is not None",
+    "chunk_id": "chunk_4197",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_lazy_apply_wrapper",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_lazy.py",
+    "line_number": 38,
+    "code_snippet": "assert isinstance(out, Sequence)",
+    "chunk_id": "chunk_4197",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 31,
+    "code_snippet": "assert actual_xp == desired_xp, msg",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 36,
+    "code_snippet": "assert None not in actual_shape  # Requires explicit support",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 37,
+    "code_snippet": "assert None not in desired_shape",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 46,
+    "code_snippet": "assert actual_shape == desired_shape, msg",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 54,
+    "code_snippet": "assert actual_size == desired_size, msg",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 58,
+    "code_snippet": "assert actual.dtype == desired.dtype, msg",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_ns_shape_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_testing.py",
+    "line_number": 66,
+    "code_snippet": "assert np.isscalar(actual) == np.isscalar(desired), _msg",
+    "chunk_id": "chunk_4202",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "default_dtype",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_funcs.py",
+    "line_number": 34,
+    "code_snippet": "assert set(dtypes) == set(domain), f\"Non-compliant namespace: {dtypes}\"",
+    "chunk_id": "chunk_4218",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "in1d",
+    "file": "repos/scikit-learn/sklearn/externals/array_api_extra/_lib/_utils/_helpers.py",
+    "line_number": 50,
+    "code_snippet": "assert ar_size is not None, \"xp.unique*() on lazy backends raises\"",
+    "chunk_id": "chunk_4228",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "fit_binary",
+    "file": "repos/scikit-learn/sklearn/linear_model/_stochastic_gradient.py",
+    "line_number": 68,
+    "code_snippet": "assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]",
+    "chunk_id": "chunk_5389",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_union1d",
+    "file": "repos/scikit-learn/sklearn/utils/_array_api.py",
+    "line_number": 8,
+    "code_snippet": "assert a.ndim == b.ndim == 1",
+    "chunk_id": "chunk_6367",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_count_nonzero",
+    "file": "repos/scikit-learn/sklearn/utils/_array_api.py",
+    "line_number": 13,
+    "code_snippet": "assert X.ndim == 2",
+    "chunk_id": "chunk_6397",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_generate_sparse_data",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert X_csr.format == \"csr\"",
+    "chunk_id": "chunk_6425",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 66,
+    "code_snippet": "assert attribute_ns == input_ns, (",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 158,
+    "code_snippet": "assert result_ns == input_ns, (",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 72,
+    "code_snippet": "assert array_device(est_xp_param) == array_device(X_xp)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 83,
+    "code_snippet": "assert attribute.shape == est_xp_param_np.shape",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 146,
+    "code_snippet": "assert isinstance(result, float)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 147,
+    "code_snippet": "assert isinstance(result_xp, float)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 86,
+    "code_snippet": "assert est_xp_param_np.dtype == np.float32",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 88,
+    "code_snippet": "assert est_xp_param_np.dtype == attribute.dtype",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 149,
+    "code_snippet": "assert abs(result - result_xp) < _atol_for_type(X.dtype)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 165,
+    "code_snippet": "assert array_device(result_xp) == array_device(X_xp)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 187,
+    "code_snippet": "assert inverse_result_ns == input_ns, (",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 176,
+    "code_snippet": "assert result.shape == result_xp_np.shape",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 177,
+    "code_snippet": "assert result.dtype == result_xp_np.dtype",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 192,
+    "code_snippet": "assert array_device(result_xp) == array_device(X_xp)",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 203,
+    "code_snippet": "assert inverse_result.shape == inverse_result_xp_np.shape",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_array_api_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 204,
+    "code_snippet": "assert inverse_result.dtype == inverse_result_xp_np.dtype",
+    "chunk_id": "chunk_6427",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_estimator_sparse_container",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 52,
+    "code_snippet": "assert probs.shape == expected_probs_shape",
+    "chunk_id": "chunk_6430",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_estimator_sparse_container",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 43,
+    "code_snippet": "assert pred.shape == (X.shape[0], 1)",
+    "chunk_id": "chunk_6430",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_estimator_sparse_container",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 45,
+    "code_snippet": "assert pred.shape == (X.shape[0],)",
+    "chunk_id": "chunk_6430",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_dict_unchanged",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert estimator.__dict__ == dict_before, (",
+    "chunk_id": "chunk_6445",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_dont_overwrite_parameters",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 30,
+    "code_snippet": "assert not attrs_added_by_fit, (",
+    "chunk_id": "chunk_6447",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_dont_overwrite_parameters",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 45,
+    "code_snippet": "assert not attrs_changed_by_fit, (",
+    "chunk_id": "chunk_6447",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformers_unfitted_stateless",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 12,
+    "code_snippet": "assert X_trans.shape[0] == X.shape[0]",
+    "chunk_id": "chunk_6458",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_transformer",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 26,
+    "code_snippet": "assert X_pred.shape[0] == n_samples",
+    "chunk_id": "chunk_6459",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_transformer",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 23,
+    "code_snippet": "assert x_pred.shape[0] == n_samples",
+    "chunk_id": "chunk_6459",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_transformer",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 70,
+    "code_snippet": "assert _num_samples(X_pred2) == n_samples",
+    "chunk_id": "chunk_6459",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_transformer",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 71,
+    "code_snippet": "assert _num_samples(X_pred3) == n_samples",
+    "chunk_id": "chunk_6459",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_mixin_order",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 32,
+    "code_snippet": "assert not violations, (",
+    "chunk_id": "chunk_6461",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_fit_score_takes_y",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 23,
+    "code_snippet": "assert args[1] in [\"y\", \"Y\"], (",
+    "chunk_id": "chunk_6462",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_preserve_dtypes",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 29,
+    "code_snippet": "assert Xt.dtype == dtype, (",
+    "chunk_id": "chunk_6464",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_estimators_pickle",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 41,
+    "code_snippet": "assert b\"_sklearn_version\" in pickled_estimator",
+    "chunk_id": "chunk_6468",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 12,
+    "code_snippet": "assert y_pred.shape == (n_samples, n_classes), (",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert y_pred.dtype.kind == \"i\"",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert isinstance(decision, np.ndarray)",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 21,
+    "code_snippet": "assert decision.shape == (n_samples, n_classes), (",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 37,
+    "code_snippet": "assert y_prob[i].shape == (n_samples, 2), (",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifier_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 47,
+    "code_snippet": "assert y_prob.shape == (n_samples, n_classes), (",
+    "chunk_id": "chunk_6470",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_regressor_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert y_pred.dtype == np.dtype(\"float64\"), (",
+    "chunk_id": "chunk_6471",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_regressor_multioutput",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert y_pred.shape == y.shape, (",
+    "chunk_id": "chunk_6471",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 27,
+    "code_snippet": "assert pred.shape == (n_samples,)",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 28,
+    "code_snippet": "assert adjusted_rand_score(pred, y) > 0.4",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 37,
+    "code_snippet": "assert pred.dtype in [np.dtype(\"int32\"), np.dtype(\"int64\")]",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 38,
+    "code_snippet": "assert pred2.dtype in [np.dtype(\"int32\"), np.dtype(\"int64\")]",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 52,
+    "code_snippet": "assert labels_sorted[0] in [0, -1]",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_clustering",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 56,
+    "code_snippet": "assert n_clusters - 1 >= labels_sorted[-1]",
+    "chunk_id": "chunk_6472",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 50,
+    "code_snippet": "assert hasattr(classifier, \"classes_\")",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 53,
+    "code_snippet": "assert y_pred.shape == (n_samples,)",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 56,
+    "code_snippet": "assert accuracy_score(y, y_pred) > 0.83",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 114,
+    "code_snippet": "assert y_prob.shape == (n_samples, n_classes)",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 91,
+    "code_snippet": "assert decision.shape == (n_samples, n_classes)",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 85,
+    "code_snippet": "assert decision.shape == (n_samples,)",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 87,
+    "code_snippet": "assert decision.shape == (n_samples, 1)",
+    "chunk_id": "chunk_6476",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outlier_corruption",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert len(np.unique(sorted_decision[start:end])) == 1, msg",
+    "chunk_id": "chunk_6477",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 19,
+    "code_snippet": "assert y_pred.shape == (n_samples,)",
+    "chunk_id": "chunk_6478",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert y_pred.dtype.kind == \"i\"",
+    "chunk_id": "chunk_6478",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 26,
+    "code_snippet": "assert output.dtype == np.dtype(\"float\")",
+    "chunk_id": "chunk_6478",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 27,
+    "code_snippet": "assert output.shape == (n_samples,)",
+    "chunk_id": "chunk_6478",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outlier_contamination",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert (",
+    "chunk_id": "chunk_6479",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_representation_invariance",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert y_pred.dtype == y_pred_list_of_arrays.dtype",
+    "chunk_id": "chunk_6480",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_representation_invariance",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 37,
+    "code_snippet": "assert y_pred.dtype == y_pred_list_of_lists.dtype",
+    "chunk_id": "chunk_6480",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_representation_invariance",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 38,
+    "code_snippet": "assert type(y_pred) == type(y_pred_list_of_arrays)",
+    "chunk_id": "chunk_6480",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_representation_invariance",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 39,
+    "code_snippet": "assert type(y_pred) == type(y_pred_list_of_lists)",
+    "chunk_id": "chunk_6480",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 32,
+    "code_snippet": "assert isinstance(y_pred, np.ndarray), (",
+    "chunk_id": "chunk_6481",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert y_pred.shape == y_test.shape, (",
+    "chunk_id": "chunk_6481",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 40,
+    "code_snippet": "assert y_pred.dtype == y_test.dtype, (",
+    "chunk_id": "chunk_6481",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict_proba",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert len(y_pred) == n_outputs, (",
+    "chunk_id": "chunk_6482",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict_proba",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 42,
+    "code_snippet": "assert pred.shape == (test_size, 2), (",
+    "chunk_id": "chunk_6482",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict_proba",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 48,
+    "code_snippet": "assert pred.dtype.kind == \"f\", (",
+    "chunk_id": "chunk_6482",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict_proba",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 62,
+    "code_snippet": "assert y_pred.shape == (test_size, n_outputs), (",
+    "chunk_id": "chunk_6482",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_predict_proba",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 67,
+    "code_snippet": "assert y_pred.dtype.kind == \"f\", (",
+    "chunk_id": "chunk_6482",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_decision_function",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 32,
+    "code_snippet": "assert isinstance(y_pred, np.ndarray), (",
+    "chunk_id": "chunk_6483",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_decision_function",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert y_pred.shape == (test_size, n_outputs), (",
+    "chunk_id": "chunk_6483",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_multilabel_output_format_decision_function",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 41,
+    "code_snippet": "assert y_pred.dtype.kind == \"f\", (",
+    "chunk_id": "chunk_6483",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_estimators_fit_returns_self",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 10,
+    "code_snippet": "assert estimator.fit(X, y) is estimator",
+    "chunk_id": "chunk_6485",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_readonly_memmap_input",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert estimator.fit(X, y) is estimator",
+    "chunk_id": "chunk_6486",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_supervised_y_2d",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 27,
+    "code_snippet": "assert len(w) > 0, msg",
+    "chunk_id": "chunk_6488",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_supervised_y_2d",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 28,
+    "code_snippet": "assert (",
+    "chunk_id": "chunk_6488",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_classifiers_predictions",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 13,
+    "code_snippet": "assert isinstance(decision, np.ndarray)",
+    "chunk_id": "chunk_6489",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_regressors_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 42,
+    "code_snippet": "assert y_pred.shape == y_.shape",
+    "chunk_id": "chunk_6493",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_regressors_train",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 48,
+    "code_snippet": "assert regressor.score(X, y_) > 0.5",
+    "chunk_id": "chunk_6493",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_regressors_no_decision_function",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 14,
+    "code_snippet": "assert not hasattr(regressor, func_name)",
+    "chunk_id": "chunk_6494",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_class_weight_classifiers",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 42,
+    "code_snippet": "assert np.mean(y_pred == 0) > 0.87",
+    "chunk_id": "chunk_6495",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_class_weight_balanced_classifiers",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 17,
+    "code_snippet": "assert f1_score(y_test, y_pred_balanced, average=\"weighted\") > f1_score(",
+    "chunk_id": "chunk_6496",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_estimators_overwrite_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 27,
+    "code_snippet": "assert joblib.hash(new_value) == joblib.hash(original_value), (",
+    "chunk_id": "chunk_6498",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_no_attributes_set_in_init",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 23,
+    "code_snippet": "assert not invalid_attr, (",
+    "chunk_id": "chunk_6499",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_sparsify_coefficients",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 24,
+    "code_snippet": "assert sparse.issparse(est.coef_)",
+    "chunk_id": "chunk_6500",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_sparsify_coefficients",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 30,
+    "code_snippet": "assert sparse.issparse(est.coef_)",
+    "chunk_id": "chunk_6500",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_parameters_default_constructible",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 11,
+    "code_snippet": "assert estimator.set_params() is estimator",
+    "chunk_id": "chunk_6506",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_parameters_default_constructible",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 96,
+    "code_snippet": "assert allowed_value, (",
+    "chunk_id": "chunk_6506",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_parameters_default_constructible",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 105,
+    "code_snippet": "assert init_param.default is None, (",
+    "chunk_id": "chunk_6506",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_parameters_default_constructible",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 122,
+    "code_snippet": "assert param_value is init_param.default, failure_text",
+    "chunk_id": "chunk_6506",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_parameters_default_constructible",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 124,
+    "code_snippet": "assert param_value == init_param.default, failure_text",
+    "chunk_id": "chunk_6506",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_non_transformer_estimators_n_iter",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 17,
+    "code_snippet": "assert np.all(np.asarray(estimator.n_iter_) >= 1), (",
+    "chunk_id": "chunk_6510",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_n_iter",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 28,
+    "code_snippet": "assert estimator.n_iter_ >= 1",
+    "chunk_id": "chunk_6511",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_n_iter",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 26,
+    "code_snippet": "assert iter_ >= 1",
+    "chunk_id": "chunk_6511",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_get_params_invariance",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 8,
+    "code_snippet": "assert all(item in deep_params.items() for item in shallow_params.items())",
+    "chunk_id": "chunk_6512",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 11,
+    "code_snippet": "assert set(orig_params.keys()) == set(curr_params.keys()), msg",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 13,
+    "code_snippet": "assert orig_params[k] is v, msg",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 51,
+    "code_snippet": "assert set(test_params.keys()) == set(curr_params.keys()), msg",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 53,
+    "code_snippet": "assert test_params[k] is v, msg",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 42,
+    "code_snippet": "assert set(params_before_exception.keys()) == set(",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_set_params",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 46,
+    "code_snippet": "assert params_before_exception[k] is v",
+    "chunk_id": "chunk_6513",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_fit_predict",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 13,
+    "code_snippet": "assert y_pred.shape == (n_samples,)",
+    "chunk_id": "chunk_6516",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_outliers_fit_predict",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 14,
+    "code_snippet": "assert y_pred.dtype.kind == \"i\"",
+    "chunk_id": "chunk_6516",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 21,
+    "code_snippet": "assert not hasattr(estimator, \"n_features_in_\")",
+    "chunk_id": "chunk_6520",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 23,
+    "code_snippet": "assert hasattr(estimator, \"n_features_in_\")",
+    "chunk_id": "chunk_6520",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 24,
+    "code_snippet": "assert estimator.n_features_in_ == X.shape[1]",
+    "chunk_id": "chunk_6520",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in_after_fitting",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 35,
+    "code_snippet": "assert hasattr(estimator, \"n_features_in_\"), err_msg",
+    "chunk_id": "chunk_6522",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in_after_fitting",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert estimator.n_features_in_ == X.shape[1], err_msg",
+    "chunk_id": "chunk_6522",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_n_features_in_after_fitting",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 93,
+    "code_snippet": "assert estimator.n_features_in_ == X.shape[1]",
+    "chunk_id": "chunk_6522",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 3,
+    "code_snippet": "assert hasattr(estimator, \"__sklearn_tags__\"), (",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 12,
+    "code_snippet": "assert isinstance(tags.estimator_type, (str, type(None))), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 13,
+    "code_snippet": "assert isinstance(tags.target_tags, TargetTags), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 14,
+    "code_snippet": "assert isinstance(tags.classifier_tags, (ClassifierTags, type(None))), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 15,
+    "code_snippet": "assert isinstance(tags.regressor_tags, (RegressorTags, type(None))), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 16,
+    "code_snippet": "assert isinstance(tags.transformer_tags, (TransformerTags, type(None))), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 17,
+    "code_snippet": "assert isinstance(tags.input_tags, InputTags), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 18,
+    "code_snippet": "assert isinstance(tags.array_api_support, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 19,
+    "code_snippet": "assert isinstance(tags.no_validation, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 20,
+    "code_snippet": "assert isinstance(tags.non_deterministic, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 21,
+    "code_snippet": "assert isinstance(tags.requires_fit, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 22,
+    "code_snippet": "assert isinstance(tags._skip_test, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 24,
+    "code_snippet": "assert isinstance(tags.target_tags.required, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 25,
+    "code_snippet": "assert isinstance(tags.target_tags.one_d_labels, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 26,
+    "code_snippet": "assert isinstance(tags.target_tags.two_d_labels, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 27,
+    "code_snippet": "assert isinstance(tags.target_tags.positive_only, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 28,
+    "code_snippet": "assert isinstance(tags.target_tags.multi_output, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 29,
+    "code_snippet": "assert isinstance(tags.target_tags.single_output, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 31,
+    "code_snippet": "assert isinstance(tags.input_tags.pairwise, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 32,
+    "code_snippet": "assert isinstance(tags.input_tags.allow_nan, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 33,
+    "code_snippet": "assert isinstance(tags.input_tags.sparse, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 34,
+    "code_snippet": "assert isinstance(tags.input_tags.categorical, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 35,
+    "code_snippet": "assert isinstance(tags.input_tags.string, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert isinstance(tags.input_tags.dict, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 37,
+    "code_snippet": "assert isinstance(tags.input_tags.one_d_array, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 38,
+    "code_snippet": "assert isinstance(tags.input_tags.two_d_array, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 39,
+    "code_snippet": "assert isinstance(tags.input_tags.three_d_array, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 40,
+    "code_snippet": "assert isinstance(tags.input_tags.positive_only, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 43,
+    "code_snippet": "assert isinstance(tags.classifier_tags.poor_score, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 44,
+    "code_snippet": "assert isinstance(tags.classifier_tags.multi_class, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 45,
+    "code_snippet": "assert isinstance(tags.classifier_tags.multi_label, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 48,
+    "code_snippet": "assert isinstance(tags.regressor_tags.poor_score, bool), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_valid_tag_types",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 51,
+    "code_snippet": "assert isinstance(tags.transformer_tags.preserves_dtype, list), err_msg",
+    "chunk_id": "chunk_6523",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_dataframe_column_names_consistency",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 49,
+    "code_snippet": "assert isinstance(estimator.feature_names_in_, np.ndarray)",
+    "chunk_id": "chunk_6525",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_dataframe_column_names_consistency",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 50,
+    "code_snippet": "assert estimator.feature_names_in_.dtype == object",
+    "chunk_id": "chunk_6525",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 34,
+    "code_snippet": "assert feature_names_out is not None",
+    "chunk_id": "chunk_6526",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 35,
+    "code_snippet": "assert isinstance(feature_names_out, np.ndarray)",
+    "chunk_id": "chunk_6526",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 36,
+    "code_snippet": "assert feature_names_out.dtype == object",
+    "chunk_id": "chunk_6526",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 37,
+    "code_snippet": "assert all(isinstance(name, str) for name in feature_names_out)",
+    "chunk_id": "chunk_6526",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 44,
+    "code_snippet": "assert len(feature_names_out) == n_features_out, (",
+    "chunk_id": "chunk_6526",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_transformer_get_feature_names_out_pandas",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 53,
+    "code_snippet": "assert len(feature_names_out_default) == n_features_out, (",
+    "chunk_id": "chunk_6527",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_param_validation",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 22,
+    "code_snippet": "assert validation_params == estimator_params, err_msg",
+    "chunk_id": "chunk_6528",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_generated_dataframe",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 41,
+    "code_snippet": "assert is_supported_dataframe(df_trans)",
+    "chunk_id": "chunk_6531",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_check_set_output_transform_dataframe",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 72,
+    "code_snippet": "assert (",
+    "chunk_id": "chunk_6532",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "check_inplace_ensure_writeable",
+    "file": "repos/scikit-learn/sklearn/utils/estimator_checks.py",
+    "line_number": 42,
+    "code_snippet": "assert not X.flags.writeable",
+    "chunk_id": "chunk_6539",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "inplace_csr_column_scale",
+    "file": "repos/scikit-learn/sklearn/utils/sparsefuncs.py",
+    "line_number": 38,
+    "code_snippet": "assert scale.shape[0] == X.shape[1]",
+    "chunk_id": "chunk_6853",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "inplace_csr_row_scale",
+    "file": "repos/scikit-learn/sklearn/utils/sparsefuncs.py",
+    "line_number": 15,
+    "code_snippet": "assert scale.shape[0] == X.shape[0]",
+    "chunk_id": "chunk_6854",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "_oas",
+    "file": "repos/scikit-learn/sklearn/covariance/_shrunk_covariance.py",
+    "line_number": 8,
+    "code_snippet": "https://arxiv.org/pdf/0907.4698.pdf",
+    "chunk_id": "chunk_7965",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "barycenter_weights",
+    "file": "repos/scikit-learn/sklearn/manifold/_locally_linear.py",
+    "line_number": 33,
+    "code_snippet": "assert X.shape[0] == n_samples",
+    "chunk_id": "chunk_8694",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "division_by_zero",
+    "severity": "high",
+    "function": "locally_linear_embedding",
+    "file": "repos/scikit-learn/sklearn/manifold/_locally_linear.py",
+    "line_number": 106,
+    "code_snippet": "<https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_",
+    "chunk_id": "chunk_8698",
+    "message": "Possible division by zero detected."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_joint_probabilities_nn",
+    "file": "repos/scikit-learn/sklearn/manifold/_t_sne.py",
+    "line_number": 38,
+    "code_snippet": "assert np.all(np.isfinite(conditional_P)), \"All probabilities should be finite\"",
+    "chunk_id": "chunk_8705",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_joint_probabilities_nn",
+    "file": "repos/scikit-learn/sklearn/manifold/_t_sne.py",
+    "line_number": 51,
+    "code_snippet": "assert np.all(np.abs(P.data) <= 1.0)",
+    "chunk_id": "chunk_8705",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_is_sorted_by_data",
+    "file": "repos/scikit-learn/sklearn/neighbors/_base.py",
+    "line_number": 21,
+    "code_snippet": "assert graph.format == \"csr\"",
+    "chunk_id": "chunk_10615",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_kneighbors_from_graph",
+    "file": "repos/scikit-learn/sklearn/neighbors/_base.py",
+    "line_number": 25,
+    "code_snippet": "assert graph.format == \"csr\"",
+    "chunk_id": "chunk_10618",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "_radius_neighbors_from_graph",
+    "file": "repos/scikit-learn/sklearn/neighbors/_base.py",
+    "line_number": 24,
+    "code_snippet": "assert graph.format == \"csr\"",
+    "chunk_id": "chunk_10619",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "stream_reuters_documents",
+    "file": "repos/scikit-learn/examples/applications/plot_out_of_core_classification.py",
+    "line_number": 38,
+    "code_snippet": "assert sha256(archive_path.read_bytes()).hexdigest() == ARCHIVE_SHA256",
+    "chunk_id": "chunk_11017",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "one_run",
+    "file": "repos/scikit-learn/benchmarks/bench_hist_gradient_boosting_threading.py",
+    "line_number": 10,
+    "code_snippet": "assert X_train.shape[0] == n_samples",
+    "chunk_id": "chunk_11173",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "one_run",
+    "file": "repos/scikit-learn/benchmarks/bench_hist_gradient_boosting_threading.py",
+    "line_number": 11,
+    "code_snippet": "assert X_test.shape[0] == n_samples",
+    "chunk_id": "chunk_11173",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "one_run",
+    "file": "repos/scikit-learn/benchmarks/bench_hist_gradient_boosting.py",
+    "line_number": 10,
+    "code_snippet": "assert X_train.shape[0] == n_samples",
+    "chunk_id": "chunk_11186",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "one_run",
+    "file": "repos/scikit-learn/benchmarks/bench_hist_gradient_boosting.py",
+    "line_number": 11,
+    "code_snippet": "assert X_test.shape[0] == n_samples",
+    "chunk_id": "chunk_11186",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "has_openmp_flags",
+    "file": "repos/scikit-learn/build_tools/check-meson-openmp-dependencies.py",
+    "line_number": 18,
+    "code_snippet": "assert len(target_sources) == 2",
+    "chunk_id": "chunk_11248",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "has_openmp_flags",
+    "file": "repos/scikit-learn/build_tools/check-meson-openmp-dependencies.py",
+    "line_number": 20,
+    "code_snippet": "assert \"compiler\" in compiler_source",
+    "chunk_id": "chunk_11248",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "has_openmp_flags",
+    "file": "repos/scikit-learn/build_tools/check-meson-openmp-dependencies.py",
+    "line_number": 21,
+    "code_snippet": "assert \"linker\" in linker_source",
+    "chunk_id": "chunk_11248",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "has_openmp_flags",
+    "file": "repos/scikit-learn/build_tools/check-meson-openmp-dependencies.py",
+    "line_number": 30,
+    "code_snippet": "assert compiler_use_openmp_flags == linker_use_openmp_flags",
+    "chunk_id": "chunk_11248",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
+  },
+  {
+    "type": "assert_usage",
+    "severity": "low",
+    "function": "get_canonical_name_meson",
+    "file": "repos/scikit-learn/build_tools/check-meson-openmp-dependencies.py",
+    "line_number": 10,
+    "code_snippet": "assert len(target[\"filename\"]) == 1",
+    "chunk_id": "chunk_11249",
+    "message": "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
   }
 ]

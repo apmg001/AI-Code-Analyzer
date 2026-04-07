@@ -152,32 +152,46 @@ class BugDetector:
         return issues
 
     def _detect_eval_usage(self, chunk: Dict) -> List[Dict]:
-        """
-        Detect real usage of eval().
-
-        Avoids false positives like:
-        - ast.literal_eval()
-        - some_eval_function()
-        """
 
         issues = []
+        code = chunk["code"]
 
-        pattern = r"\beval\s*\("
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return issues
 
-        for line_number, line in self._scan_lines(chunk):
+        for node in ast.walk(tree):
 
-            if re.search(pattern, line):
+            if isinstance(node, ast.Call):
 
-                issues.append(
-                    self._build_issue(
-                        chunk,
-                        line_number,
-                        line,
-                        "eval_usage",
-                        "high",
-                        "Use of eval() detected. This may lead to security risks."
+                if isinstance(node.func, ast.Name) and node.func.id == "eval":
+
+                    line_number = node.lineno
+                    code_lines = code.split("\n")
+                    line = code_lines[line_number - 1]
+
+                    severity = "high"
+                    message = "Use of eval() detected. This may allow execution of arbitrary code."
+
+                    # detect common safe pattern: eval(compile(...), ctx)
+                    if "compile(" in line and "ctx" in line:
+                        severity = "medium"
+                        message = (
+                            "Dynamic evaluation detected using compiled code. "
+                            "Ensure the source file being executed is trusted."
+                        )
+
+                    issues.append(
+                        self._build_issue(
+                            chunk,
+                            line_number,
+                            line,
+                            "eval_usage",
+                            severity,
+                            message
+                        )
                     )
-                )
 
         return issues
 
@@ -185,22 +199,46 @@ class BugDetector:
 
         issues = []
 
-        pattern = r"\bexec\s*\("
+        code = chunk["code"]
 
-        for line_number, line in self._scan_lines(chunk):
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return issues
 
-            if re.search(pattern, line):
+        for node in ast.walk(tree):
 
-                issues.append(
-                    self._build_issue(
-                        chunk,
-                        line_number,
-                        line,
-                        "exec_usage",
-                        "high",
-                        "Use of exec() detected. This may allow arbitrary code execution."
+            if isinstance(node, ast.Call):
+
+                if isinstance(node.func, ast.Name) and node.func.id == "exec":
+
+                    line_number = node.lineno
+                    code_lines = code.split("\n")
+                    line = code_lines[line_number - 1]
+
+                    # basic context check: reading from file then executing
+                    if "read()" in line or "open(" in code:
+                        severity = "medium"
+                        message = (
+                            "Dynamic code execution detected. "
+                            "This appears to load code from a file. Ensure the file source is trusted."
+                        )
+                    else:
+                        severity = "high"
+                        message = (
+                            "Direct exec() call detected. This may allow arbitrary code execution."
+                        )
+
+                    issues.append(
+                        self._build_issue(
+                            chunk,
+                            line_number,
+                            line,
+                            "exec_usage",
+                            severity,
+                            message
+                        )
                     )
-                )
 
         return issues
 
@@ -251,18 +289,33 @@ class BugDetector:
 
         issues = []
 
-        for line_number, line in self._scan_lines(chunk):
+        code = chunk["code"]
+        function_name = chunk["function_name"]
 
-            if "assert " in line:
+        # Ignore test functions
+        if function_name.startswith("test"):
+            return issues
+
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return issues
+
+        for node in ast.walk(tree):
+
+            if isinstance(node, ast.Assert):
+
+                line_number = node.lineno
+                code_lines = code.split("\n")
 
                 issues.append(
                     self._build_issue(
                         chunk,
                         line_number,
-                        line,
+                        code_lines[line_number - 1],
                         "assert_usage",
                         "low",
-                        "Assertion used in code. This may cause runtime failures."
+                        "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
                     )
                 )
 
