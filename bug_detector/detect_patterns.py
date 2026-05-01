@@ -20,16 +20,17 @@ import re
 import ast
 from typing import List, Dict
 
+
 class BugDetector:
     """
-    Rule-based bug detection engine.
+    Rule-based + semantic bug detection engine.
 
     Each rule inspects code and returns a list of issues if patterns match.
+    Semantic detection uses embeddings to catch patterns rules miss.
     """
 
     def __init__(self):
 
-        # Register detection rules here
         self.rules = [
             self._detect_division_by_zero,
             self._detect_eval_usage,
@@ -44,15 +45,13 @@ class BugDetector:
 
     def analyze_chunk(self, chunk: Dict) -> List[Dict]:
         """
-        Run all detection rules on a single chunk.
+        Run all rule-based detection rules on a single chunk.
         """
 
         issues = []
 
         for rule in self.rules:
-
             result = rule(chunk)
-
             if result:
                 issues.extend(result)
 
@@ -60,17 +59,38 @@ class BugDetector:
 
     def analyze_chunks(self, chunks: List[Dict]) -> List[Dict]:
         """
-        Run detection on multiple chunks.
+        Run BOTH rule-based AND semantic detection on all chunks.
+
+        Rule-based: fast, deterministic, catches known patterns.
+        Semantic:   AI-powered, catches unknown similar patterns.
         """
+
+        from embeddings.similarity_search import SimilarityDetector
+        from embeddings.embed_functions import CodeEmbedder
 
         detected_issues = []
 
+        # Step 1: Rule-based detection (always runs)
         for chunk in chunks:
-
             issues = self.analyze_chunk(chunk)
-
             if issues:
                 detected_issues.extend(issues)
+
+        # Step 2: Semantic detection (runs only if embeddings exist)
+        if chunks and "embedding" in chunks[0]:
+
+            print("[INFO] Running semantic similarity detection")
+
+            embedder = CodeEmbedder()
+            similarity_detector = SimilarityDetector(embedder, threshold=0.75)
+            semantic_issues = similarity_detector.find_suspicious_chunks(chunks)
+
+            print(f"[INFO] Semantic detection found {len(semantic_issues)} additional issues")
+
+            detected_issues.extend(semantic_issues)
+
+        else:
+            print("[WARN] No embeddings found — skipping semantic detection")
 
         return detected_issues
 
@@ -79,25 +99,17 @@ class BugDetector:
     # ---------------------------------------------------------
 
     def _scan_lines(self, chunk: Dict):
-        """
-        Split chunk code into numbered lines and skip empty/comment lines.
-        """
 
         code = chunk["code"]
         lines = code.split("\n")
-
         result = []
 
         for i, line in enumerate(lines, start=1):
-
             stripped = line.strip()
-
             if not stripped:
                 continue
-
             if stripped.startswith("#"):
                 continue
-
             result.append((i, line))
 
         return result
@@ -111,9 +123,6 @@ class BugDetector:
         severity: str,
         message: str
     ) -> Dict:
-        """
-        Standard issue object builder.
-        """
 
         return {
             "type": issue_type,
@@ -135,19 +144,12 @@ class BugDetector:
         issues = []
 
         for line_number, line in self._scan_lines(chunk):
-
             if re.search(r"/\s*0", line):
-
-                issues.append(
-                    self._build_issue(
-                        chunk,
-                        line_number,
-                        line,
-                        "division_by_zero",
-                        "high",
-                        "Possible division by zero detected."
-                    )
-                )
+                issues.append(self._build_issue(
+                    chunk, line_number, line,
+                    "division_by_zero", "high",
+                    "Possible division by zero detected."
+                ))
 
         return issues
 
@@ -162,43 +164,32 @@ class BugDetector:
             return issues
 
         for node in ast.walk(tree):
-
             if isinstance(node, ast.Call):
-
                 if isinstance(node.func, ast.Name) and node.func.id == "eval":
 
                     line_number = node.lineno
-                    code_lines = code.split("\n")
-                    line = code_lines[line_number - 1]
+                    line = code.split("\n")[line_number - 1]
 
-                    severity = "high"
-                    message = "Use of eval() detected. This may allow execution of arbitrary code."
-
-                    # detect common safe pattern: eval(compile(...), ctx)
                     if "compile(" in line and "ctx" in line:
                         severity = "medium"
                         message = (
                             "Dynamic evaluation detected using compiled code. "
                             "Ensure the source file being executed is trusted."
                         )
+                    else:
+                        severity = "high"
+                        message = "Use of eval() detected. This may allow execution of arbitrary code."
 
-                    issues.append(
-                        self._build_issue(
-                            chunk,
-                            line_number,
-                            line,
-                            "eval_usage",
-                            severity,
-                            message
-                        )
-                    )
+                    issues.append(self._build_issue(
+                        chunk, line_number, line,
+                        "eval_usage", severity, message
+                    ))
 
         return issues
 
     def _detect_exec_usage(self, chunk: Dict) -> List[Dict]:
 
         issues = []
-
         code = chunk["code"]
 
         try:
@@ -207,38 +198,26 @@ class BugDetector:
             return issues
 
         for node in ast.walk(tree):
-
             if isinstance(node, ast.Call):
-
                 if isinstance(node.func, ast.Name) and node.func.id == "exec":
 
                     line_number = node.lineno
-                    code_lines = code.split("\n")
-                    line = code_lines[line_number - 1]
+                    line = code.split("\n")[line_number - 1]
 
-                    # basic context check: reading from file then executing
                     if "read()" in line or "open(" in code:
                         severity = "medium"
                         message = (
                             "Dynamic code execution detected. "
-                            "This appears to load code from a file. Ensure the file source is trusted."
+                            "Appears to load code from a file. Ensure the source is trusted."
                         )
                     else:
                         severity = "high"
-                        message = (
-                            "Direct exec() call detected. This may allow arbitrary code execution."
-                        )
+                        message = "Direct exec() call detected. This may allow arbitrary code execution."
 
-                    issues.append(
-                        self._build_issue(
-                            chunk,
-                            line_number,
-                            line,
-                            "exec_usage",
-                            severity,
-                            message
-                        )
-                    )
+                    issues.append(self._build_issue(
+                        chunk, line_number, line,
+                        "exec_usage", severity, message
+                    ))
 
         return issues
 
@@ -253,47 +232,31 @@ class BugDetector:
             return issues
 
         for node in ast.walk(tree):
-
             if isinstance(node, ast.While):
-
-                # detect "while True"
                 if isinstance(node.test, ast.Constant) and node.test.value is True:
 
-                    has_exit = False
-
-                    for child in ast.walk(node):
-
-                        if isinstance(child, (ast.Break, ast.Return, ast.Raise)):
-                            has_exit = True
-                            break
+                    has_exit = any(
+                        isinstance(child, (ast.Break, ast.Return, ast.Raise))
+                        for child in ast.walk(node)
+                    )
 
                     if not has_exit:
-
                         line_number = node.lineno
-                        code_lines = code.split("\n")
-
-                        issues.append(
-                            self._build_issue(
-                                chunk,
-                                line_number,
-                                code_lines[line_number - 1],
-                                "potential_infinite_loop",
-                                "medium",
-                                "While loop with constant True and no exit condition detected."
-                            )
-                        )
+                        issues.append(self._build_issue(
+                            chunk, line_number,
+                            code.split("\n")[line_number - 1],
+                            "potential_infinite_loop", "medium",
+                            "While True loop with no exit condition detected."
+                        ))
 
         return issues
 
     def _detect_assert_usage(self, chunk: Dict) -> List[Dict]:
 
         issues = []
-
         code = chunk["code"]
-        function_name = chunk["function_name"]
 
-        # Ignore test functions
-        if function_name.startswith("test"):
+        if chunk["function_name"].startswith("test"):
             return issues
 
         try:
@@ -302,22 +265,15 @@ class BugDetector:
             return issues
 
         for node in ast.walk(tree):
-
             if isinstance(node, ast.Assert):
 
                 line_number = node.lineno
-                code_lines = code.split("\n")
-
-                issues.append(
-                    self._build_issue(
-                        chunk,
-                        line_number,
-                        code_lines[line_number - 1],
-                        "assert_usage",
-                        "low",
-                        "Assertion used in runtime code. Assertions may be removed when Python runs with optimization flags."
-                    )
-                )
+                issues.append(self._build_issue(
+                    chunk, line_number,
+                    code.split("\n")[line_number - 1],
+                    "assert_usage", "low",
+                    "Assert used in runtime code. May be stripped by Python optimizer flags."
+                ))
 
         return issues
 
@@ -334,37 +290,19 @@ if __name__ == "__main__":
 
     repo_path = "ingestion/repos/flask"
 
-    print("[INFO] Scanning repository")
-
     python_files = scan_python_files(repo_path)
-
-    print(f"[INFO] Found {len(python_files)} Python files")
-
-    print("[INFO] Extracting functions")
-
     functions = extract_functions_from_files(python_files[:5])
-
-    print(f"[INFO] Extracted {len(functions)} functions")
-
-    print("[INFO] Creating chunks")
-
     chunks = chunk_functions(functions)
 
     detector = BugDetector()
-
-    print("[INFO] Running bug detection")
-
     issues = detector.analyze_chunks(chunks)
 
-    print(f"[INFO] Detected {len(issues)} issues\n")
+    print(f"\n[INFO] Total issues detected: {len(issues)}\n")
 
     for issue in issues:
-
-        print("Issue Type:", issue["type"])
+        print("Type    :", issue["type"])
         print("Severity:", issue["severity"])
         print("Function:", issue["function"])
-        print("File:", issue["file"])
-        print("Line:", issue["line_number"])
-        print("Code:", issue["code_snippet"])
-        print("Message:", issue["message"])
+        print("File    :", issue["file"])
+        print("Message :", issue["message"])
         print("-" * 60)
