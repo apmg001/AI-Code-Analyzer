@@ -3,143 +3,133 @@
 """
 Module: embed_functions
 
-Purpose
--------
-Generate vector embeddings for code chunks.
+Responsibility
+--------------
+Generate semantic vector embeddings for code chunks using
+a pre-trained sentence-transformer model.
 
-This module converts code snippets (functions) into vector
-representations that can later be used for:
-
-    • semantic search
-    • bug pattern detection
-    • context retrieval for LLMs
-
-Responsibilities
-----------------
-1. Load an embedding model
-2. Convert code chunks into embeddings
-3. Attach embeddings to chunk metadata
-4. Provide utilities for saving embeddings
+Design notes
+------------
+- CodeEmbedder is a thin wrapper so the model can be swapped
+  (e.g. OpenAI text-embedding-ada-002) without touching any
+  other module — Dependency Inversion in practice.
+- The model is loaded once in __init__ and reused; loading
+  is expensive (~1s) and must not happen per-chunk.
+- embed_chunks is a pure function that accepts the embedder
+  as a parameter — easy to mock in tests.
+- Embeddings are stored inline on the chunk dict so the pipeline
+  stays a simple list-of-dicts throughout.
 """
 
 import json
-from typing import List, Dict
+import logging
+from pathlib import Path
+from typing import Any, Dict, List
 
 from sentence_transformers import SentenceTransformer
+
+from config import DEFAULT_CONFIG, PipelineConfig
+from exceptions import EmbeddingError
+
+logger = logging.getLogger(__name__)
 
 
 class CodeEmbedder:
     """
-    Wrapper around embedding model.
+    Wrapper around a sentence-transformer embedding model.
 
-    Keeps model loading separate from embedding logic.
+    Keeps model loading isolated from embedding logic so either
+    part can change independently.
     """
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, config: PipelineConfig = DEFAULT_CONFIG):
+        logger.info("Loading embedding model: %s", config.embedding_model)
+        try:
+            self._model = SentenceTransformer(config.embedding_model)
+        except Exception as exc:
+            raise EmbeddingError(f"Failed to load embedding model '{config.embedding_model}': {exc}") from exc
+        logger.info("Embedding model ready")
 
-        print(f"[INFO] Loading embedding model: {model_name}")
-
-        self.model = SentenceTransformer(model_name)
-
-        print("[INFO] Model loaded successfully")
-
-    def embed_code(self, code: str) -> List[float]:
+    def embed(self, text: str) -> List[float]:
         """
-        Generate embedding for a single code block.
+        Encode a text string into a float vector.
+
+        Parameters
+        ----------
+        text : str
+            Raw source code or pattern string.
+
+        Returns
+        -------
+        List[float]
+            Dense embedding vector.
+
+        Raises
+        ------
+        EmbeddingError
+            If the model fails to encode the input.
         """
+        try:
+            vector = self._model.encode(text, show_progress_bar=False)
+            return vector.tolist()
+        except Exception as exc:
+            raise EmbeddingError(f"Encoding failed: {exc}") from exc
 
-        vector = self.model.encode(code)
 
-        return vector.tolist()
+# ------------------------------------------------------------------
+# Pipeline functions
+# ------------------------------------------------------------------
 
-
-def embed_chunks(chunks: List[Dict], embedder: CodeEmbedder) -> List[Dict]:
+def embed_chunks(
+    chunks:   List[Dict[str, Any]],
+    embedder: CodeEmbedder,
+) -> List[Dict[str, Any]]:
     """
-    Generate embeddings for a list of code chunks.
+    Attach embedding vectors to a list of chunks in-place.
+
+    Chunks that fail to embed are logged and skipped rather
+    than crashing the whole pipeline.
 
     Parameters
     ----------
-    chunks : list[dict]
-        Output from code_chunker module
-    embedder : CodeEmbedder
-        Embedding model wrapper
+    chunks   : List of chunk dicts (from code_chunker).
+    embedder : CodeEmbedder instance.
 
     Returns
     -------
-    list[dict]
-        Chunks with attached embedding vectors
+    List of chunks with `embedding` field populated.
     """
 
-    embedded_chunks = []
+    failed = 0
 
     for chunk in chunks:
+        try:
+            chunk["embedding"] = embedder.embed(chunk["code"])
+        except EmbeddingError as exc:
+            logger.warning(
+                "Embedding failed for chunk %s in %s: %s",
+                chunk["chunk_id"], chunk["file_path"], exc,
+            )
+            failed += 1
 
-        code_text = chunk["code"]
+    succeeded = len(chunks) - failed
+    logger.info("Embeddings generated: %d succeeded, %d failed", succeeded, failed)
 
-        embedding_vector = embedder.embed_code(code_text)
-
-        enriched_chunk = dict(chunk)
-        enriched_chunk["embedding"] = embedding_vector
-
-        embedded_chunks.append(enriched_chunk)
-
-    return embedded_chunks
+    return chunks
 
 
-def save_embeddings(data: List[Dict], output_path: str):
+def save_embeddings(chunks: List[Dict[str, Any]], output_path: Path) -> None:
     """
-    Save embedded chunks to disk.
+    Persist embedded chunks to disk as JSON.
 
     Parameters
     ----------
-    data : list[dict]
-    output_path : str
+    chunks      : Chunks with embeddings attached.
+    output_path : Destination file path.
     """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(chunks, f, indent=2)
 
-        json.dump(data, f, indent=2)
-
-    print(f"[INFO] Embeddings saved to {output_path}")
-
-
-if __name__ == "__main__":
-
-    # Local testing block
-
-    from ingestion.scan_files import scan_python_files
-    from parsing.extract_function_code import extract_functions_from_files
-    from parsing.code_chunker import chunk_functions
-
-    repo_path = "ingestion/repos/flask"
-
-    print("[INFO] Scanning repository")
-
-    python_files = scan_python_files(repo_path)
-
-    print(f"[INFO] Found {len(python_files)} Python files")
-
-    print("[INFO] Extracting functions")
-
-    functions = extract_functions_from_files(python_files[:5])
-
-    print(f"[INFO] Extracted {len(functions)} functions")
-
-    print("[INFO] Creating chunks")
-
-    chunks = chunk_functions(functions)
-
-    print(f"[INFO] Generated {len(chunks)} chunks")
-
-    embedder = CodeEmbedder()
-
-    print("[INFO] Generating embeddings")
-
-    embedded_chunks = embed_chunks(chunks, embedder)
-
-    print(f"[INFO] Generated embeddings for {len(embedded_chunks)} chunks")
-
-    save_embeddings(embedded_chunks, "function_embeddings.json")
-
-    print("[INFO] Sample embedding vector size:",
-          len(embedded_chunks[0]["embedding"]))
+    logger.info("Embeddings saved to %s", output_path)
