@@ -1,59 +1,91 @@
 # ingestion/clone_repo.py
 
-import os
-from git import Repo
+"""
+Module: clone_repo
+
+Responsibility
+--------------
+Clone a remote git repository to a local directory.
+Returns the local path for downstream modules to consume.
+
+Design notes
+------------
+- Idempotent: if the repo already exists locally, skip cloning.
+- Raises RepositoryCloneError on any failure so the pipeline
+  can fail fast with a clear message instead of a cryptic git stderr.
+"""
+
+import logging
+import subprocess
+from pathlib import Path
+
+from config import DEFAULT_CONFIG, PipelineConfig
+from exceptions import RepositoryCloneError
+
+logger = logging.getLogger(__name__)
 
 
-def clone_repository(repo_url, base_dir="repos"):
+def _derive_repo_name(repo_url: str) -> str:
     """
-    Clone a GitHub repository if it does not already exist locally.
+    Extract the repository name from a GitHub URL.
+
+    Example
+    -------
+    'https://github.com/pallets/flask' -> 'flask'
+    """
+    return repo_url.rstrip("/").split("/")[-1].removesuffix(".git")
+
+
+def clone_repository(
+    repo_url: str,
+    config: PipelineConfig = DEFAULT_CONFIG,
+) -> Path:
+    """
+    Clone a git repository and return the local directory path.
+
+    If the target directory already exists, cloning is skipped
+    and the existing path is returned immediately.
 
     Parameters
     ----------
     repo_url : str
-        URL of the GitHub repository.
-    base_dir : str
-        Directory where repositories will be stored.
+        Full HTTPS URL of the repository.
+    config   : PipelineConfig
+        Pipeline-wide settings.
 
     Returns
     -------
-    str
-        Path to the local repository directory.
+    Path
+        Absolute path to the cloned repository on disk.
+
+    Raises
+    ------
+    RepositoryCloneError
+        If git is not installed or the clone command fails.
     """
 
-    # Make sure the directory for storing repos exists
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    repo_name  = _derive_repo_name(repo_url)
+    target_dir = config.repos_dir / repo_name
 
-    # Extract repo name from URL
-    repo_name = repo_url.rstrip("/").split("/")[-1]
+    if target_dir.exists():
+        logger.info("Repository already exists locally — skipping clone: %s", target_dir)
+        return target_dir
 
-    repo_path = os.path.join(base_dir, repo_name)
+    config.repos_dir.mkdir(parents=True, exist_ok=True)
 
-    # Avoid cloning again if it already exists
-    if os.path.exists(repo_path):
-        print(f"[INFO] Repository already present: {repo_path}")
-        return repo_path
+    logger.info("Cloning %s into %s", repo_url, target_dir)
 
-    print(f"[INFO] Cloning repository: {repo_url}")
+    result = subprocess.run(
+        ["git", "clone", "--depth", "1", repo_url, str(target_dir)],
+        capture_output=True,
+        text=True,
+    )
 
-    try:
-        Repo.clone_from(repo_url, repo_path)
-    except Exception as e:
-        print(f"[ERROR] Failed to clone repository: {e}")
-        return None
+    if result.returncode != 0:
+        raise RepositoryCloneError(
+            f"git clone failed for '{repo_url}'.\n"
+            f"stderr: {result.stderr.strip()}"
+        )
 
-    print(f"[INFO] Repository cloned to: {repo_path}")
-
-    return repo_path
-
-
-if __name__ == "__main__":
-
-    # Example test run
-    test_repo = "https://github.com/pallets/flask"
-
-    local_path = clone_repository(test_repo)
-
-    if local_path:
-        print(f"[SUCCESS] Repo ready at {local_path}")
+    logger.info("Clone complete: %s", target_dir)
+    return target_dir
