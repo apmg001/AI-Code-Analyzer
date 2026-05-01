@@ -3,163 +3,162 @@
 """
 Module: benchmark
 
-Purpose
--------
-Evaluate the performance of the code analysis pipeline.
+Responsibility
+--------------
+Produce a structured evaluation report after analysis is complete.
 
-This module summarizes the results produced by:
-    • bug detection
-    • patch generation
-
-Responsibilities
+Metrics reported
 ----------------
-1. Count analyzed functions
-2. Count detected issues
-3. Categorize issue types
-4. Produce evaluation report
+- Total chunks scanned
+- Total issues detected
+- Issue breakdown by severity (high / medium / low)
+- Issue breakdown by type
+- Detection rate (issues per 100 chunks)
+- Patch coverage (what % of issues have a patch)
+- Patch source breakdown (LLM vs rule-based)
+- Top 5 most problematic files
+
+Design notes
+------------
+- BenchmarkReport is initialised with raw data and exposes
+  two methods: as_dict() for programmatic use and print_report()
+  for terminal output. No business logic runs at init time.
+- All formatting is in _format_* helper methods so the data
+  layer and presentation layer stay separate.
 """
 
-from typing import List, Dict
-from collections import defaultdict
+import logging
+from collections import Counter, defaultdict
+from typing import Any, Dict, List
+
+logger = logging.getLogger(__name__)
 
 
 class BenchmarkReport:
     """
-    Evaluation helper class.
+    Computes and presents pipeline evaluation metrics.
 
-    Generates metrics from detected issues and analyzed chunks.
+    Parameters
+    ----------
+    chunks  : All embedded chunks that were analyzed.
+    issues  : All detected issues.
+    patches : All generated patches (optional — pass [] to skip patch metrics).
     """
 
-    def __init__(self, chunks: List[Dict], issues: List[Dict]):
+    def __init__(
+        self,
+        chunks:  List[Dict[str, Any]],
+        issues:  List[Dict[str, Any]],
+        patches: List[Dict[str, Any]] = None,
+    ):
+        self._chunks  = chunks
+        self._issues  = issues
+        self._patches = patches or []
 
-        self.chunks = chunks
-        self.issues = issues
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
-    # ---------------------------------------
-    # Basic metrics
-    # ---------------------------------------
-
-    def total_functions(self) -> int:
-        """
-        Total number of analyzed functions.
-        """
-
-        return len(self.chunks)
-
-    def total_issues(self) -> int:
-        """
-        Total detected issues.
-        """
-
-        return len(self.issues)
-
-    def issue_distribution(self) -> Dict[str, int]:
-        """
-        Count issues grouped by type.
-        """
-
-        counts = defaultdict(int)
-
-        for issue in self.issues:
-            counts[issue["type"]] += 1
-
-        return dict(counts)
-
-    def severity_distribution(self) -> Dict[str, int]:
-        """
-        Count issues grouped by severity.
-        """
-
-        counts = defaultdict(int)
-
-        for issue in self.issues:
-            counts[issue["severity"]] += 1
-
-        return dict(counts)
-
-    def affected_files(self) -> int:
-        """
-        Number of files containing detected issues.
-        """
-
-        files = set()
-
-        for issue in self.issues:
-            files.add(issue["file"])
-
-        return len(files)
-
-    # ---------------------------------------
-    # Reporting
-    # ---------------------------------------
-
-    def generate_report(self) -> Dict:
-        """
-        Generate structured evaluation report.
-        """
-
-        report = {
-            "functions_analyzed": self.total_functions(),
-            "issues_detected": self.total_issues(),
-            "files_with_issues": self.affected_files(),
-            "issue_distribution": self.issue_distribution(),
-            "severity_distribution": self.severity_distribution()
+    def as_dict(self) -> Dict[str, Any]:
+        """Return all metrics as a serialisable dict."""
+        return {
+            "summary":           self._summary(),
+            "severity_breakdown": self._severity_breakdown(),
+            "type_breakdown":    self._type_breakdown(),
+            "patch_metrics":     self._patch_metrics(),
+            "top_files":         self._top_files(),
         }
 
-        return report
+    def print_report(self) -> None:
+        """Print a formatted report to stdout."""
 
-    def print_report(self):
+        divider   = "─" * 52
+        h_divider = "═" * 52
 
-        report = self.generate_report()
+        summary     = self._summary()
+        severity    = self._severity_breakdown()
+        types       = self._type_breakdown()
+        patch_stats = self._patch_metrics()
+        top_files   = self._top_files()
 
-        print("\n========== ANALYSIS REPORT ==========\n")
+        print(f"\n{h_divider}")
+        print("  AI CODE ANALYZER — EVALUATION REPORT")
+        print(h_divider)
 
-        print("Functions analyzed:", report["functions_analyzed"])
-        print("Issues detected:", report["issues_detected"])
-        print("Files with issues:", report["files_with_issues"])
+        print(f"\n{'SUMMARY':}")
+        print(f"  Chunks analyzed      : {summary['total_chunks']:>6}")
+        print(f"  Issues detected      : {summary['total_issues']:>6}")
+        print(f"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks")
 
-        print("\nIssue Type Distribution:")
+        print(f"\n{divider}")
+        print("SEVERITY BREAKDOWN")
+        for level in ("high", "medium", "low"):
+            count = severity.get(level, 0)
+            bar   = "█" * min(count, 30)
+            print(f"  {level.upper():<8} {count:>4}  {bar}")
 
-        for issue_type, count in report["issue_distribution"].items():
-            print(f"  {issue_type}: {count}")
+        print(f"\n{divider}")
+        print("ISSUE TYPES")
+        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):
+            print(f"  {issue_type:<35} {count:>4}")
 
-        print("\nSeverity Distribution:")
+        if self._patches:
+            print(f"\n{divider}")
+            print("PATCH COVERAGE")
+            print(f"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}")
+            print(f"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%")
+            print(f"  LLM patches          : {patch_stats['llm_count']:>4}")
+            print(f"  Rule-based patches   : {patch_stats['rule_count']:>4}")
 
-        for severity, count in report["severity_distribution"].items():
-            print(f"  {severity}: {count}")
+        if top_files:
+            print(f"\n{divider}")
+            print("TOP FILES BY ISSUE COUNT")
+            for i, (filepath, count) in enumerate(top_files, start=1):
+                short = filepath.split("/")[-1]
+                print(f"  {i}. {short:<40} {count:>3} issues")
 
-        print("\n=====================================\n")
+        print(f"\n{h_divider}\n")
 
+    # ------------------------------------------------------------------
+    # Metric computations
+    # ------------------------------------------------------------------
 
-if __name__ == "__main__":
+    def _summary(self) -> Dict[str, Any]:
+        total_chunks = len(self._chunks)
+        total_issues = len(self._issues)
+        rate = (total_issues / total_chunks * 100) if total_chunks > 0 else 0.0
 
-    # Local testing pipeline
+        return {
+            "total_chunks":            total_chunks,
+            "total_issues":            total_issues,
+            "detection_rate_per_100":  round(rate, 2),
+        }
 
-    from ingestion.scan_files import scan_python_files
-    from parsing.extract_function_code import extract_functions_from_files
-    from parsing.code_chunker import chunk_functions
-    from bug_detector.detect_patterns import BugDetector
+    def _severity_breakdown(self) -> Dict[str, int]:
+        return dict(Counter(i.get("severity", "unknown") for i in self._issues))
 
-    repo_path = "ingestion/repos/flask"
+    def _type_breakdown(self) -> Dict[str, int]:
+        return dict(Counter(i.get("type", "unknown") for i in self._issues))
 
-    print("[INFO] Scanning repository")
+    def _patch_metrics(self) -> Dict[str, Any]:
+        if not self._patches:
+            return {"patched_issues": 0, "coverage_pct": 0.0, "llm_count": 0, "rule_count": 0}
 
-    python_files = scan_python_files(repo_path)
+        total   = len(self._issues)
+        patched = sum(1 for p in self._patches if p.get("patch_source") != "none")
+        llm     = sum(1 for p in self._patches if p.get("patch_source") == "llm")
+        rule    = sum(1 for p in self._patches if p.get("patch_source") == "rule_based")
+        pct     = (patched / total * 100) if total > 0 else 0.0
 
-    print("[INFO] Extracting functions")
+        return {
+            "patched_issues": patched,
+            "coverage_pct":   round(pct, 1),
+            "llm_count":      llm,
+            "rule_count":     rule,
+        }
 
-    functions = extract_functions_from_files(python_files[:5])
-
-    print("[INFO] Creating chunks")
-
-    chunks = chunk_functions(functions)
-
-    detector = BugDetector()
-
-    print("[INFO] Detecting issues")
-
-    issues = detector.analyze_chunks(chunks)
-
-    benchmark = BenchmarkReport(chunks, issues)
-
-    benchmark.print_report()
+    def _top_files(self, n: int = 5) -> List[tuple]:
+        file_counts: Dict[str, int] = defaultdict(int)
+        for issue in self._issues:
+            file_counts[issue.get("file", "unknown")] += 1
+        return sorted(file_counts.items(), key=lambda x: -x[1])[:n]
