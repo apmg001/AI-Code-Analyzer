@@ -3,136 +3,141 @@
 """
 Module: code_chunker
 
-Purpose
--------
-Convert extracted function objects into standardized code chunks.
+Responsibility
+--------------
+Convert extracted function records into self-contained chunks
+ready for embedding and analysis.
 
-This module prepares code segments so they can later be processed by
-embedding models or AI analyzers.
-
-Responsibilities
-----------------
-1. Accept function metadata objects
-2. Normalize structure
-3. Generate chunk identifiers
-4. Return clean chunk objects ready for downstream processing
+Design notes
+------------
+- Functions under min_chunk_lines are too small to be meaningful
+  and are dropped (getters, one-liners).
+- Functions over max_chunk_lines are split at logical boundaries
+  (blank lines) to stay within the embedding model's token budget.
+- Each chunk gets a deterministic ID derived from file path +
+  function name + start line so results are reproducible.
+- chunk_id is a hash, not a sequential integer, so chunks remain
+  stable even if unrelated files change.
 """
 
-from typing import List, Dict
+import hashlib
+import logging
+from typing import Any, Dict, List
+
+from config import DEFAULT_CONFIG, PipelineConfig
+
+logger = logging.getLogger(__name__)
 
 
-def _generate_chunk_id(index: int) -> str:
+# ------------------------------------------------------------------
+# Internal helpers
+# ------------------------------------------------------------------
+
+def _make_chunk_id(file_path: str, function_name: str, start_line: int) -> str:
     """
-    Generate a simple chunk identifier.
+    Produce a short, stable identifier for a chunk.
 
-    Example:
-        chunk_0001
-        chunk_0002
+    Using a hash means IDs don't shift when other files are added
+    or removed from the repo — unlike a sequential counter.
     """
+    raw = f"{file_path}::{function_name}::{start_line}"
+    return hashlib.sha1(raw.encode()).hexdigest()[:12]
 
-    return f"chunk_{index:04d}"
 
-
-def _estimate_code_size(code: str) -> int:
+def _split_on_blank_lines(code: str, max_lines: int) -> List[str]:
     """
-    Estimate approximate token size.
+    Split a long block of code into sub-chunks at blank line boundaries.
 
-    This is a lightweight approximation using word count.
-    Later this can be replaced with tokenizer-based counting.
+    Splitting on blank lines keeps logical blocks (if-blocks, loops)
+    together rather than cutting mid-statement.
     """
+    lines      = code.splitlines()
+    sub_chunks = []
+    current    = []
 
-    return len(code.split())
+    for line in lines:
+        current.append(line)
+
+        at_blank = not line.strip()
+        over_limit = len(current) >= max_lines
+
+        if at_blank and over_limit:
+            sub_chunks.append("\n".join(current).strip())
+            current = []
+
+    if current:
+        sub_chunks.append("\n".join(current).strip())
+
+    return [c for c in sub_chunks if c]
 
 
-def create_code_chunk(function_object: Dict, index: int) -> Dict:
-    """
-    Convert a function object into a standardized chunk.
+def _build_chunk(
+    function_record: Dict[str, Any],
+    code:            str,
+    start_line:      int,
+    config:          PipelineConfig,
+) -> Dict[str, Any]:
+    """Assemble a single chunk dict from a function record and code slice."""
 
-    Parameters
-    ----------
-    function_object : dict
-        Output from extract_function_code module
-    index : int
-        Position index used for generating chunk ID
-
-    Returns
-    -------
-    dict
-        Structured code chunk
-    """
-
-    code = function_object["code"]
-
-    chunk = {
-        "chunk_id": _generate_chunk_id(index),
-        "function_name": function_object["function_name"],
-        "file_path": function_object["file_path"],
-        "line_start": function_object["line_start"],
-        "line_end": function_object["line_end"],
-        "arguments": function_object["arguments"],
-        "code": code,
-        "estimated_tokens": _estimate_code_size(code)
+    return {
+        "chunk_id":      _make_chunk_id(function_record["file_path"], function_record["function_name"], start_line),
+        "function_name": function_record["function_name"],
+        "file_path":     function_record["file_path"],
+        "start_line":    start_line,
+        "end_line":      start_line + len(code.splitlines()),
+        "code":          code,
+        "embedding":     None,   # populated later by embed_functions
     }
 
-    return chunk
 
+# ------------------------------------------------------------------
+# Public API
+# ------------------------------------------------------------------
 
-def chunk_functions(function_list: List[Dict]) -> List[Dict]:
+def chunk_functions(
+    functions: List[Dict[str, Any]],
+    config: PipelineConfig = DEFAULT_CONFIG,
+) -> List[Dict[str, Any]]:
     """
-    Convert multiple function objects into code chunks.
+    Convert a list of function records into analysis-ready chunks.
+
+    Short functions (< min_chunk_lines) are dropped.
+    Long functions (> max_chunk_lines) are split at blank lines.
 
     Parameters
     ----------
-    function_list : list[dict]
+    functions : List of function records from extract_function_code.
+    config    : PipelineConfig
 
     Returns
     -------
-    list[dict]
-        List of standardized code chunks
+    List of chunk dicts, each with a stable chunk_id and embedding=None.
     """
 
-    chunks = []
+    chunks:  List[Dict[str, Any]] = []
+    dropped: int = 0
 
-    for idx, fn in enumerate(function_list, start=1):
+    for func in functions:
+        code       = func["code"].strip()
+        line_count = len(code.splitlines())
 
-        chunk = create_code_chunk(fn, idx)
+        if line_count < config.min_chunk_lines:
+            dropped += 1
+            continue
 
-        chunks.append(chunk)
+        if line_count <= config.max_chunk_lines:
+            chunks.append(_build_chunk(func, code, func["start_line"], config))
+        else:
+            sub_codes = _split_on_blank_lines(code, config.max_chunk_lines)
+            offset    = func["start_line"]
+
+            for sub_code in sub_codes:
+                chunks.append(_build_chunk(func, sub_code, offset, config))
+                offset += len(sub_code.splitlines())
+
+    logger.info(
+        "Chunking complete — %d chunks produced, %d functions dropped (too short)",
+        len(chunks), dropped,
+    )
 
     return chunks
-
-
-if __name__ == "__main__":
-
-    # Local test block
-    # Runs only when module executed directly
-
-    from ingestion.scan_files import scan_python_files
-    from parsing.extract_function_code import extract_functions_from_files
-
-    repo_path = "ingestion/repos/flask"
-
-    print("[INFO] Scanning repository...")
-
-    python_files = scan_python_files(repo_path)
-
-    print(f"[INFO] Found {len(python_files)} Python files")
-
-    print("\n[INFO] Extracting functions...")
-
-    functions = extract_functions_from_files(python_files[:5])
-
-    print(f"[INFO] Extracted {len(functions)} functions")
-
-    print("\n[INFO] Creating code chunks...\n")
-
-    chunks = chunk_functions(functions)
-
-    for chunk in chunks[:5]:
-
-        print("Chunk ID:", chunk["chunk_id"])
-        print("Function:", chunk["function_name"])
-        print("File:", chunk["file_path"])
-        print("Estimated Tokens:", chunk["estimated_tokens"])
-        print("Code Preview:\n", chunk["code"])
-        print("-" * 60)
