@@ -1,0 +1,48 @@
+{
+  "summary": {
+    "total_chunks": 356,
+    "total_issues": 97,
+    "detection_rate_per_100": 27.25
+  },
+  "severity_breakdown": {
+    "low": 4,
+    "medium": 20,
+    "high": 73
+  },
+  "type_breakdown": {
+    "assert_in_production": 4,
+    "eval_usage": 1,
+    "bare_except_swallow": 3,
+    "exec_usage": 1,
+    "statistical_anomaly": 18,
+    "taint_flow": 70
+  },
+  "patch_metrics": {
+    "patched_issues": 9,
+    "coverage_pct": 9.3,
+    "llm_count": 0,
+    "rule_count": 9
+  },
+  "top_files": [
+    [
+      "repos/flask/tests/test_basic.py",
+      15
+    ],
+    [
+      "repos/flask/tests/test_reqctx.py",
+      8
+    ],
+    [
+      "repos/flask/tests/test_json.py",
+      7
+    ],
+    [
+      "repos/flask/src/flask/cli.py",
+      6
+    ],
+    [
+      "repos/flask/src/flask/config.py",
+      6
+    ]
+  ]
+}

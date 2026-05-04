@@ -2,19 +2,271 @@
   {
     "function": "shell_command",
     "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "chunk_1140",
+    "chunk_id": "6a776c7dc16e",
     "issue_type": "eval_usage",
     "severity": "medium",
-    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)\n",
-    "suggested_fix": "Avoid using eval(). Consider safer alternatives such as:\n\u2022 ast.literal_eval()\n\u2022 explicit parsing logic"
+    "patch_source": "rule_based",
+    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)",
+    "suggested_fix": "Replace eval() with ast.literal_eval() for safe value parsing:\n\n  import ast\n  result = ast.literal_eval(expression)\n\nIf you need expression evaluation, use the `simpleeval` library."
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "4e29d0ed8189",
+    "issue_type": "assert_in_production",
+    "severity": "low",
+    "patch_source": "rule_based",
+    "original_code": "def __init__(\n        self,\n        import_name: str,\n        static_url_path: str | None = None,\n        static_folder: str | os.PathLike[str] | None = \"static\",\n        static_host: str | None = None,\n        host_matching: bool = False,\n        subdomain_matching: bool = False,\n        template_folder: str | os.PathLike[str] | None = \"templates\",\n        instance_path: str | None = None,\n        instance_relative_config: bool = False,\n        root_path: str | None = None,\n    ):\n        super().__init__(\n            import_name=import_name,\n            static_url_path=static_url_path,\n            static_folder=static_folder,\n            static_host=static_host,\n            host_matching=host_matching,\n            subdomain_matching=subdomain_matching,\n            template_folder=template_folder,\n            instance_path=instance_path,\n            instance_relative_config=instance_relative_config,\n            root_path=root_path,\n        )\n\n        #: The Click command group for registering CLI commands for this\n        #: object. The commands are available from the ``flask`` command\n        #: once the application has been discovered and blueprints have\n        #: been registered.\n        self.cli = cli.AppGroup()\n\n        # Set the name of the Click group in case someone wants to add\n        # the app's commands to another CLI tool.\n        self.cli.name = self.name\n\n        # Add a static route using the provided static_url_path, static_host,\n        # and static_folder if there is a configured static_folder.\n        # Note we do this without checking if static_folder exists.\n        # For one, it might be created while the server is running (e.g. during\n        # development). Also, Google App Engine stores static files somewhere\n        if self.has_static_folder:\n            assert bool(static_host) == host_matching, (\n                \"Invalid static_host/host_matching combination\"\n            )\n            # Use a weakref to avoid creating a reference cycle between the app\n            # and the view function (see #3761).\n            self_ref = weakref.ref(self)\n            self.add_url_rule(\n                f\"{self.static_url_path}/<path:filename>\",\n                endpoint=\"static\",\n                host=static_host,\n                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore\n            )",
+    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag."
+  },
+  {
+    "function": "shell_command",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "6a776c7dc16e",
+    "issue_type": "bare_except_swallow",
+    "severity": "high",
+    "patch_source": "rule_based",
+    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)",
+    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise"
+  },
+  {
+    "function": "routes_command",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "cf3bc517966f",
+    "issue_type": "bare_except_swallow",
+    "severity": "high",
+    "patch_source": "rule_based",
+    "original_code": "def routes_command(sort: str, all_methods: bool) -> None:\n    \"\"\"Show all registered routes with endpoints and methods.\"\"\"\n    rules = list(current_app.url_map.iter_rules())\n\n    if not rules:\n        click.echo(\"No routes were registered.\")\n        return\n\n    ignored_methods = set() if all_methods else {\"HEAD\", \"OPTIONS\"}\n    host_matching = current_app.url_map.host_matching\n    has_domain = any(rule.host if host_matching else rule.subdomain for rule in rules)\n    rows = []\n\n    for rule in rules:\n        row = [\n            rule.endpoint,\n            \", \".join(sorted((rule.methods or set()) - ignored_methods)),\n        ]\n\n        if has_domain:\n            row.append((rule.host if host_matching else rule.subdomain) or \"\")\n\n        row.append(rule.rule)\n        rows.append(row)\n\n    headers = [\"Endpoint\", \"Methods\"]\n    sorts = [\"endpoint\", \"methods\"]\n\n    if has_domain:\n        headers.append(\"Host\" if host_matching else \"Subdomain\")\n        sorts.append(\"domain\")\n\n    headers.append(\"Rule\")\n    sorts.append(\"rule\")\n\n    try:\n        rows.sort(key=itemgetter(sorts.index(sort)))\n    except ValueError:\n        pass\n\n    rows.insert(0, headers)\n    widths = [max(len(row[i]) for row in rows) for i in range(len(headers))]\n    rows.insert(1, [\"-\" * w for w in widths])\n    template = \"  \".join(f\"{{{i}:<{w}}}\" for i, w in enumerate(widths))\n\n    for row in rows:\n        click.echo(template.format(*row))",
+    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise"
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/debughelpers.py",
+    "chunk_id": "7fc030feb304",
+    "issue_type": "assert_in_production",
+    "severity": "low",
+    "patch_source": "rule_based",
+    "original_code": "def __init__(self, request: Request) -> None:\n        exc = request.routing_exception\n        assert isinstance(exc, RequestRedirect)\n        buf = [\n            f\"A request was sent to '{request.url}', but routing issued\"\n            f\" a redirect to the canonical URL '{exc.new_url}'.\"\n        ]\n\n        if f\"{request.base_url}/\" == exc.new_url.partition(\"?\")[0]:\n            buf.append(\n                \" The URL was defined with a trailing slash. Flask\"\n                \" will redirect to the URL with a trailing slash if it\"\n                \" was accessed without one.\"\n            )\n\n        buf.append(\n            \" Send requests to the canonical URL, or use 307 or 308 for\"\n            \" routing redirects. Otherwise, browsers will drop form\"\n            \" data.\\n\\n\"\n            \"This exception is only raised in debug mode.\"\n        )\n        super().__init__(\"\".join(buf))",
+    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag."
+  },
+  {
+    "function": "from_pyfile",
+    "file": "repos/flask/src/flask/config.py",
+    "chunk_id": "7b839ffa11cb",
+    "issue_type": "exec_usage",
+    "severity": "medium",
+    "patch_source": "rule_based",
+    "original_code": "def from_pyfile(\n        self, filename: str | os.PathLike[str], silent: bool = False\n    ) -> bool:\n        \"\"\"Updates the values in the config from a Python file.  This function\n        behaves as if the file was imported as module with the\n        :meth:`from_object` function.\n\n        :param filename: the filename of the config.  This can either be an\n                         absolute filename or a filename relative to the\n                         root path.\n        :param silent: set to ``True`` if you want silent failure for missing\n                       files.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 0.7\n           `silent` parameter.\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n        d = types.ModuleType(\"config\")\n        d.__file__ = filename\n        try:\n            with open(filename, mode=\"rb\") as config_file:\n                exec(compile(config_file.read(), filename, \"exec\"), d.__dict__)\n        except OSError as e:\n            if silent and e.errno in (errno.ENOENT, errno.EISDIR, errno.ENOTDIR):\n                return False\n            e.strerror = f\"Unable to load configuration file ({e.strerror})\"\n            raise\n        self.from_object(d)\n        return True",
+    "suggested_fix": "Refactor dynamic execution into explicit callable functions:\n\n  # Instead of: exec(dynamic_code)\n  import importlib\n  module = importlib.import_module('my.module')\n  module.run()"
   },
   {
     "function": "_endpoint_from_view_func",
     "file": "repos/flask/src/flask/sansio/scaffold.py",
-    "chunk_id": "chunk_1367",
-    "issue_type": "assert_usage",
+    "chunk_id": "b98a0333398f",
+    "issue_type": "assert_in_production",
     "severity": "low",
-    "original_code": "def _endpoint_from_view_func(view_func: ft.RouteCallable) -> str:\n    \"\"\"Internal helper that returns the default endpoint for a given\n    function.  This always is the function name.\n    \"\"\"\n    assert view_func is not None, \"expected view func if endpoint is not provided.\"\n    return view_func.__name__\n",
-    "suggested_fix": "Avoid using assert in production code.\nReplace with explicit error handling.\n\nExample:\nif condition is False:\n    raise ValueError('Invalid state')"
+    "patch_source": "rule_based",
+    "original_code": "def _endpoint_from_view_func(view_func: ft.RouteCallable) -> str:\n    \"\"\"Internal helper that returns the default endpoint for a given\n    function.  This always is the function name.\n    \"\"\"\n    assert view_func is not None, \"expected view func if endpoint is not provided.\"\n    return view_func.__name__",
+    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag."
+  },
+  {
+    "function": "from_prefixed_env",
+    "file": "repos/flask/src/flask/config.py",
+    "chunk_id": "4b14adf9d333",
+    "issue_type": "bare_except_swallow",
+    "severity": "high",
+    "patch_source": "rule_based",
+    "original_code": "def from_prefixed_env(\n        self, prefix: str = \"FLASK\", *, loads: t.Callable[[str], t.Any] = json.loads\n    ) -> bool:\n        \"\"\"Load any environment variables that start with ``FLASK_``,\n        dropping the prefix from the env key for the config key. Values\n        are passed through a loading function to attempt to convert them\n        to more specific types than strings.\n\n        Keys are loaded in :func:`sorted` order.\n\n        The default loading function attempts to parse values as any\n        valid JSON type, including dicts and lists.\n\n        Specific items in nested dicts can be set by separating the\n        keys with double underscores (``__``). If an intermediate key\n        doesn't exist, it will be initialized to an empty dict.\n\n        :param prefix: Load env vars that start with this prefix,\n            separated with an underscore (``_``).\n        :param loads: Pass each string value to this function and use\n            the returned value as the config value. If any error is\n            raised it is ignored and the value remains a string. The\n            default is :func:`json.loads`.\n\n        .. versionadded:: 2.1\n        \"\"\"\n        prefix = f\"{prefix}_\"\n\n        for key in sorted(os.environ):\n            if not key.startswith(prefix):\n                continue\n\n            value = os.environ[key]\n            key = key.removeprefix(prefix)\n\n            try:\n                value = loads(value)\n            except Exception:\n                # Keep the value as a string if loading failed.\n                pass\n\n            if \"__\" not in key:\n                # A non-nested key, set directly.\n                self[key] = value\n                continue\n\n            # Traverse nested dictionaries with keys separated by \"__\".\n            current = self\n            *parts, tail = key.split(\"__\")\n\n            for part in parts:\n                # If an intermediate dict does not exist, create it.\n                if part not in current:\n                    current[part] = {}\n\n                current = current[part]\n\n            current[tail] = value\n\n        return True",
+    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise"
+  },
+  {
+    "function": "dispatch_request",
+    "file": "repos/flask/src/flask/views.py",
+    "chunk_id": "14e1389fc333",
+    "issue_type": "assert_in_production",
+    "severity": "low",
+    "patch_source": "rule_based",
+    "original_code": "def dispatch_request(self, **kwargs: t.Any) -> ft.ResponseReturnValue:\n        meth = getattr(self, request.method.lower(), None)\n\n        # If the request method is HEAD and we don't have a handler for it\n        # retry with GET.\n        if meth is None and request.method == \"HEAD\":\n            meth = getattr(self, \"get\", None)\n\n        assert meth is not None, f\"Unimplemented method {request.method!r}\"\n        return current_app.ensure_sync(meth)(**kwargs)  # type: ignore[no-any-return]",
+    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag."
+  },
+  {
+    "function": "logout",
+    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
+    "chunk_id": "959883243316",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def logout():\n    \"\"\"Clear the current session, including the stored user id.\"\"\"\n    session.clear()\n    return redirect(url_for(\"index\"))",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "get_post",
+    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
+    "chunk_id": "27f05133ab09",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def get_post(id, check_author=True):\n    \"\"\"Get a post and its author by id.\n\n    Checks that the id exists and optionally that the current user is\n    the author.\n\n    :param id: id of post to get\n    :param check_author: require the current user to be the author\n    :return: the post with author information\n    :raise 404: if a post with the given id doesn't exist\n    :raise 403: if the current user isn't the author\n    \"\"\"\n    post = (\n        get_db()\n        .execute(\n            \"SELECT p.id, title, body, created, author_id, username\"\n            \" FROM post p JOIN user u ON p.author_id = u.id\"\n            \" WHERE p.id = ?\",\n            (id,),\n        )\n        .fetchone()\n    )\n\n    if post is None:\n        abort(404, f\"Post id {id} doesn't exist.\")\n\n    if check_author and post[\"author_id\"] != g.user[\"id\"]:\n        abort(403)\n\n    return post",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "init_db",
+    "file": "repos/flask/examples/tutorial/flaskr/db.py",
+    "chunk_id": "70e94a4bb545",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def init_db():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    db = get_db()\n\n    with current_app.open_resource(\"schema.sql\") as f:\n        db.executescript(f.read().decode(\"utf8\"))",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "init_db_command",
+    "file": "repos/flask/examples/tutorial/flaskr/db.py",
+    "chunk_id": "03b5c748f3e9",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def init_db_command():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    init_db()\n    click.echo(\"Initialized the database.\")",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "_path_is_ancestor",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "15944066f3fa",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def _path_is_ancestor(path: str, other: str) -> bool:\n    \"\"\"Take ``other`` and remove the length of ``path`` from it. Then join it\n    to ``path``. If it is the original value, ``path`` is an ancestor of\n    ``other``.\"\"\"\n    return os.path.join(path, other[len(path) :].lstrip(os.sep)) == other",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "create_url_adapter",
+    "file": "repos/flask/src/flask/app.py",
+    "chunk_id": "ec8a9e7682b6",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def create_url_adapter(self, request: Request | None) -> MapAdapter | None:\n        \"\"\"Creates a URL adapter for the given request. The URL adapter\n        is created at a point where the request context is not yet set\n        up so the request is passed explicitly.\n\n        .. versionchanged:: 3.1\n            If :data:`SERVER_NAME` is set, it does not restrict requests to\n            only that domain, for both ``subdomain_matching`` and\n            ``host_matching``.\n\n        .. versionchanged:: 1.0\n            :data:`SERVER_NAME` no longer implicitly enables subdomain\n            matching. Use :attr:`subdomain_matching` instead.\n\n        .. versionchanged:: 0.9\n           This can be called outside a request when the URL adapter is created\n           for an application context.\n\n        .. versionadded:: 0.6\n        \"\"\"\n        if request is not None:\n            if (trusted_hosts := self.config[\"TRUSTED_HOSTS\"]) is not None:\n                request.trusted_hosts = trusted_hosts\n\n            # Check trusted_hosts here until bind_to_environ does.\n            request.host = get_host(request.environ, request.trusted_hosts)  # pyright: ignore\n            subdomain = None\n            server_name = self.config[\"SERVER_NAME\"]\n\n            if self.url_map.host_matching:\n                # Don't pass SERVER_NAME, otherwise it's used and the actual\n                # host is ignored, which breaks host matching.\n                server_name = None\n            elif not self.subdomain_matching:\n                # Werkzeug doesn't implement subdomain matching yet. Until then,\n                # disable it by forcing the current subdomain to the default, or\n                # the empty string.\n                subdomain = self.url_map.default_subdomain or \"\"\n\n            return self.url_map.bind_to_environ(\n                request.environ, server_name=server_name, subdomain=subdomain\n            )\n\n        # Need at least SERVER_NAME to match/build outside a request.\n        if self.config[\"SERVER_NAME\"] is not None:\n            return self.url_map.bind(\n                self.config[\"SERVER_NAME\"],\n                script_name=self.config[\"APPLICATION_ROOT\"],\n                url_scheme=self.config[\"PREFERRED_URL_SCHEME\"],\n            )\n\n        return None",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "convert",
+    "file": "repos/flask/src/flask/cli.py",
+    "chunk_id": "5deff2592660",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def convert(\n        self, value: t.Any, param: click.Parameter | None, ctx: click.Context | None\n    ) -> t.Any:\n        try:\n            import ssl\n        except ImportError:\n            raise click.BadParameter(\n                'Using \"--cert\" requires Python to be compiled with SSL support.',\n                ctx,\n                param,\n            ) from None\n\n        try:\n            return self.path_type(value, param, ctx)\n        except click.BadParameter:\n            value = click.STRING(value, param, ctx).lower()\n\n            if value == \"adhoc\":\n                try:\n                    import cryptography  # noqa: F401\n                except ImportError:\n                    raise click.BadParameter(\n                        \"Using ad-hoc certificates requires the cryptography library.\",\n                        ctx,\n                        param,\n                    ) from None\n\n                return value\n\n            obj = import_string(value, silent=True)\n\n            if isinstance(obj, ssl.SSLContext):\n                return obj\n\n            raise",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "stream_with_context",
+    "file": "repos/flask/src/flask/helpers.py",
+    "chunk_id": "bfc41d860c49",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def stream_with_context(\n    generator_or_function: t.Iterator[t.AnyStr],\n) -> t.Iterator[t.AnyStr]: ...",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "_split_blueprint_path",
+    "file": "repos/flask/src/flask/helpers.py",
+    "chunk_id": "fc439ffbe655",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def _split_blueprint_path(name: str) -> list[str]:\n    out: list[str] = [name]\n\n    if \".\" in name:\n        out.extend(_split_blueprint_path(name.rpartition(\".\")[0]))\n\n    return out",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "loads",
+    "file": "repos/flask/src/flask/json/provider.py",
+    "chunk_id": "7184dcb9beea",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def loads(self, s: str | bytes, **kwargs: t.Any) -> t.Any:\n        \"\"\"Deserialize data as JSON.\n\n        :param s: Text or UTF-8 bytes.\n        :param kwargs: May be passed to the underlying JSON library.\n        \"\"\"\n        raise NotImplementedError",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "raise_any",
+    "file": "repos/flask/src/flask/helpers.py",
+    "chunk_id": "910ccdc1251a",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def raise_any(self, message: str) -> None:\n        \"\"\"Raise if any errors were collected.\"\"\"\n        if self.errors:\n            if sys.version_info >= (3, 11):\n                raise BaseExceptionGroup(message, self.errors)  # noqa: F821\n            else:\n                raise self.errors[0]",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "check",
+    "file": "repos/flask/src/flask/json/tag.py",
+    "chunk_id": "542c69c0845a",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def check(self, value: t.Any) -> bool:\n        \"\"\"Check if the given value should be tagged by this tag.\"\"\"\n        raise NotImplementedError",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "check",
+    "file": "repos/flask/src/flask/json/tag.py",
+    "chunk_id": "00fb9a920509",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def check(self, value: t.Any) -> bool:\n        return (\n            isinstance(value, dict)\n            and len(value) == 1\n            and next(iter(value)) in self.serializer.tags\n        )",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "__init__",
+    "file": "repos/flask/src/flask/json/tag.py",
+    "chunk_id": "7c60e2bdce02",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def __init__(self) -> None:\n        self.tags: dict[str, JSONTag] = {}\n        self.order: list[JSONTag] = []\n\n        for cls in self.default_tags:\n            self.register(cls)",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "select_jinja_autoescape",
+    "file": "repos/flask/src/flask/sansio/app.py",
+    "chunk_id": "f300fafc4413",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def select_jinja_autoescape(self, filename: str | None) -> bool:\n        \"\"\"Returns ``True`` if autoescaping should be active for the given\n        template name. If no template name is given, returns `True`.\n\n        .. versionchanged:: 2.2\n            Autoescaping is now enabled by default for ``.svg`` files.\n\n        .. versionadded:: 0.5\n        \"\"\"\n        if filename is None:\n            return True\n        return filename.endswith((\".html\", \".htm\", \".xml\", \".xhtml\", \".svg\"))",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "register",
+    "file": "repos/flask/src/flask/sansio/blueprints.py",
+    "chunk_id": "d7d76070dfad",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "if bp_subdomain is None:\n                bp_subdomain = blueprint.subdomain\n\n            if state.subdomain is not None and bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain + \".\" + state.subdomain\n            elif bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain\n            elif state.subdomain is not None:\n                bp_options[\"subdomain\"] = state.subdomain\n\n            if bp_url_prefix is None:\n                bp_url_prefix = blueprint.url_prefix\n\n            if state.url_prefix is not None and bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = (\n                    state.url_prefix.rstrip(\"/\") + \"/\" + bp_url_prefix.lstrip(\"/\")\n                )\n            elif bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = bp_url_prefix\n            elif state.url_prefix is not None:\n                bp_options[\"url_prefix\"] = state.url_prefix\n\n            bp_options[\"name_prefix\"] = name\n            blueprint.register(app, bp_options)",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "static_folder",
+    "file": "repos/flask/src/flask/sansio/scaffold.py",
+    "chunk_id": "2fb78115bb91",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def static_folder(self, value: str | os.PathLike[str] | None) -> None:\n        if value is not None:\n            value = os.fspath(value).rstrip(r\"\\/\")\n\n        self._static_folder = value",
+    "suggested_fix": "No automated patch available. Manual review required."
+  },
+  {
+    "function": "max_form_memory_size",
+    "file": "repos/flask/src/flask/wrappers.py",
+    "chunk_id": "02dac0799461",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "none",
+    "original_code": "def max_form_memory_size(self) -> int | None:\n        \"\"\"The maximum size in bytes any non-file form field may be in a\n        ``multipart/form-data`` body. If this limit is exceeded, a 413\n        :exc:`~werkzeug.exceptions.RequestEntityTooLarge` error is raised. If it\n        is set to ``None``, no limit is enforced at the Flask application level.\n\n        Each request defaults to the :data:`MAX_FORM_MEMORY_SIZE` config, which\n        defaults to ``500_000``. It can be set on a specific ``request`` to\n        apply the limit to that specific view. This should be set appropriately\n        based on an application's or view's specific needs.\n\n        .. versionchanged:: 3.1\n            This is configurable through Flask config.\n        \"\"\"\n        if self._max_form_memory_size is not None:\n            return self._max_form_memory_size\n\n        if not current_app:\n            return super().max_form_memory_size\n\n        return current_app.config[\"MAX_FORM_MEMORY_SIZE\"]  # type: ignore[no-any-return]",
+    "suggested_fix": "No automated patch available. Manual review required."
   }
 ]

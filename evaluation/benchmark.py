@@ -142,12 +142,17 @@ class BenchmarkReport:
 
     def _patch_metrics(self) -> Dict[str, Any]:
         if not self._patches:
-            return {"patched_issues": 0, "coverage_pct": 0.0, "llm_count": 0, "rule_count": 0}
+            return {
+                "patched_issues": 0,
+                "coverage_pct":   0.0,
+                "llm_count":      0,
+                "rule_count":     0,
+            }
 
         total   = len(self._issues)
         patched = sum(1 for p in self._patches if p.get("patch_source") != "none")
-        llm     = sum(1 for p in self._patches if p.get("patch_source") == "llm")
         rule    = sum(1 for p in self._patches if p.get("patch_source") == "rule_based")
+        llm     = sum(1 for p in self._patches if p.get("patch_source") not in ("rule_based", "none", None))
         pct     = (patched / total * 100) if total > 0 else 0.0
 
         return {
