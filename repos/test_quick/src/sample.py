@@ -15,4 +15,4 @@ def fetch():
         pass
 
 def debug_output():
-    print("debug")
+    print("debug value")
