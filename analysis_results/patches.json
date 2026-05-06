@@ -1,13 +1,621 @@
 [
   {
-    "function": "shell_command",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "6a776c7dc16e",
-    "issue_type": "bare_except_swallow",
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "division_by_zero",
     "severity": "high",
     "patch_source": "rule_based",
-    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)",
-    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "Guard the division with a non-zero check:\n\n  if denominator != 0:\n      result = numerator / denominator\n  else:\n      raise ValueError(f'denominator must be non-zero, got {denominator}')",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "quick_test",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "78a3b62551ac",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def quick_test() -> None:\n    \"\"\"\n    Run the pipeline on a tiny hand-crafted file.\n\n    Completes in ~60 seconds. Use this after every change\n    to confirm the pipeline still runs end to end before\n    committing a 20-minute Flask run.\n\n    What to watch for:\n    - \"Loading embedding model\" should appear ONCE only\n    - All 5 issue types should be detected\n    - Confidence scores should be attached to every issue\n    \"\"\"\n\n    test_dir = Path(\"repos/test_quick/src\")\n    test_dir.mkdir(parents=True, exist_ok=True)\n\n    # One function per issue type \u2014 easy to verify detection\n    (test_dir / \"sample.py\").write_text(\n        \"def divide(a, b):\\n\"\n        \"    return a / 0\\n\\n\"\n        \"def load_data(items=[]):\\n\"\n        \"    items.append(1)\\n\"\n        \"    return items\\n\\n\"\n        \"def run_code(user_input):\\n\"\n        \"    eval(user_input)\\n\\n\"\n        \"def fetch():\\n\"\n        \"    try:\\n\"\n        \"        pass\\n\"\n        \"    except:\\n\"\n        \"        pass\\n\\n\"\n        'def debug_output():\\n'\n        '    print(\"debug value\")\\n'\n    )\n\n    print(\"\\n[QUICK TEST MODE]\\n\")\n\n    config   = DEFAULT_CONFIG\n    files    = scan_python_files(Path(\"repos/test_quick\"), config)\n    funcs    = extract_functions_from_files(files)\n    chunks   = chunk_functions(funcs, config)\n\n    # Embedder created here \u2014 passed into detector below\n    # Model should appear in logs exactly ONCE\n    embedder = CodeEmbedder(config)\n    chunks   = embed_chunks(chunks, embedder)\n\n    detector = BugDetector(config, embedder=embedder)\n    issues   = detector.analyze_chunks(chunks)\n\n    print(f\"Files  : {len(files)}\")\n    print(f\"Chunks : {len(chunks)}\")\n    print(f\"Issues : {len(issues)}\")\n    print()\n\n    for issue in issues:\n        conf = issue.get(\"confidence\", 0)\n        print(f\"  [{conf:.0%}]  {issue['type']:<30}  {issue['function']}()\")\n\n    print(\"\\n[DONE]\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "print_report",
+    "file": "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+    "chunk_id": "3707abf9decf",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def print_report(self) -> None:\n        \"\"\"Print a formatted report to stdout.\"\"\"\n\n        divider   = \"\u2500\" * 52\n        h_divider = \"\u2550\" * 52\n\n        summary     = self._summary()\n        severity    = self._severity_breakdown()\n        types       = self._type_breakdown()\n        patch_stats = self._patch_metrics()\n        top_files   = self._top_files()\n\n        print(f\"\\n{h_divider}\")\n        print(\"  AI CODE ANALYZER \u2014 EVALUATION REPORT\")\n        print(h_divider)\n\n        print(f\"\\n{'SUMMARY':}\")\n        print(f\"  Chunks analyzed      : {summary['total_chunks']:>6}\")\n        print(f\"  Issues detected      : {summary['total_issues']:>6}\")\n        print(f\"  Detection rate       : {summary['detection_rate_per_100']:>5.1f} per 100 chunks\")\n\n        print(f\"\\n{divider}\")\n        print(\"SEVERITY BREAKDOWN\")\n        for level in (\"high\", \"medium\", \"low\"):\n            count = severity.get(level, 0)\n            bar   = \"\u2588\" * min(count, 30)\n            print(f\"  {level.upper():<8} {count:>4}  {bar}\")\n\n        print(f\"\\n{divider}\")\n        print(\"ISSUE TYPES\")\n        for issue_type, count in sorted(types.items(), key=lambda x: -x[1]):\n            print(f\"  {issue_type:<35} {count:>4}\")\n\n        if self._patches:\n            print(f\"\\n{divider}\")\n            print(\"PATCH COVERAGE\")\n            print(f\"  Issues with patches  : {patch_stats['patched_issues']:>4} / {summary['total_issues']}\")\n            print(f\"  Coverage             : {patch_stats['coverage_pct']:>5.1f}%\")\n            print(f\"  LLM patches          : {patch_stats['llm_count']:>4}\")\n            print(f\"  Rule-based patches   : {patch_stats['rule_count']:>4}\")\n\n        if top_files:\n            print(f\"\\n{divider}\")\n            print(\"TOP FILES BY ISSUE COUNT\")\n            for i, (filepath, count) in enumerate(top_files, start=1):\n                short = filepath.split(\"/\")[-1]\n                print(f\"  {i}. {short:<40} {count:>3} issues\")\n\n        print(f\"\\n{h_divider}\\n\")",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "extract_functions",
+    "file": "repos/AI-Code-Analyzer/parsing/extract_functions.py",
+    "chunk_id": "27221138033d",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def extract_functions(file_path: str) -> List[Dict]:\n    \"\"\"\n    Extract all function definitions from a Python source file.\n\n    Parameters\n    ----------\n    file_path : str\n        Absolute path to the Python source file.\n\n    Returns\n    -------\n    List[Dict]\n        A list containing metadata for each function discovered.\n    \"\"\"\n\n    functions = []\n\n    try:\n        with open(file_path, \"r\", encoding=\"utf-8\") as file:\n            source_code = file.read()\n\n        tree = ast.parse(source_code)\n\n    except Exception as error:\n        print(f\"[ERROR] Failed to parse file: {file_path}\")\n        print(error)\n        return functions\n\n    # Walk through AST nodes\n    for node in ast.walk(tree):\n\n        if isinstance(node, ast.FunctionDef):\n\n            function_data = {\n                \"function_name\": node.name,\n                \"line_number\": node.lineno,\n                \"arguments\": [arg.arg for arg in node.args.args]\n            }\n\n            functions.append(function_data)\n\n    return functions",
+    "suggested_fix": "No automated patch available. Manual review required.",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "extract_functions",
+    "file": "repos/AI-Code-Analyzer/parsing/extract_functions.py",
+    "chunk_id": "27221138033d",
+    "issue_type": "print_in_production",
+    "severity": "low",
+    "patch_source": "none",
+    "original_code": "def extract_functions(file_path: str) -> List[Dict]:\n    \"\"\"\n    Extract all function definitions from a Python source file.\n\n    Parameters\n    ----------\n    file_path : str\n        Absolute path to the Python source file.\n\n    Returns\n    -------\n    List[Dict]\n        A list containing metadata for each function discovered.\n    \"\"\"\n\n    functions = []\n\n    try:\n        with open(file_path, \"r\", encoding=\"utf-8\") as file:\n            source_code = file.read()\n\n        tree = ast.parse(source_code)\n\n    except Exception as error:\n        print(f\"[ERROR] Failed to parse file: {file_path}\")\n        print(error)\n        return functions\n\n    # Walk through AST nodes\n    for node in ast.walk(tree):\n\n        if isinstance(node, ast.FunctionDef):\n\n            function_data = {\n                \"function_name\": node.name,\n                \"line_number\": node.lineno,\n                \"arguments\": [arg.arg for arg in node.args.args]\n            }\n\n            functions.append(function_data)\n\n    return functions",
+    "suggested_fix": "No automated patch available. Manual review required.",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -20,32 +628,13 @@
   },
   {
     "function": "__init__",
-    "file": "repos/flask/src/flask/app.py",
-    "chunk_id": "4e29d0ed8189",
-    "issue_type": "assert_in_production",
-    "severity": "low",
-    "patch_source": "rule_based",
-    "original_code": "def __init__(\n        self,\n        import_name: str,\n        static_url_path: str | None = None,\n        static_folder: str | os.PathLike[str] | None = \"static\",\n        static_host: str | None = None,\n        host_matching: bool = False,\n        subdomain_matching: bool = False,\n        template_folder: str | os.PathLike[str] | None = \"templates\",\n        instance_path: str | None = None,\n        instance_relative_config: bool = False,\n        root_path: str | None = None,\n    ):\n        super().__init__(\n            import_name=import_name,\n            static_url_path=static_url_path,\n            static_folder=static_folder,\n            static_host=static_host,\n            host_matching=host_matching,\n            subdomain_matching=subdomain_matching,\n            template_folder=template_folder,\n            instance_path=instance_path,\n            instance_relative_config=instance_relative_config,\n            root_path=root_path,\n        )\n\n        #: The Click command group for registering CLI commands for this\n        #: object. The commands are available from the ``flask`` command\n        #: once the application has been discovered and blueprints have\n        #: been registered.\n        self.cli = cli.AppGroup()\n\n        # Set the name of the Click group in case someone wants to add\n        # the app's commands to another CLI tool.\n        self.cli.name = self.name\n\n        # Add a static route using the provided static_url_path, static_host,\n        # and static_folder if there is a configured static_folder.\n        # Note we do this without checking if static_folder exists.\n        # For one, it might be created while the server is running (e.g. during\n        # development). Also, Google App Engine stores static files somewhere\n        if self.has_static_folder:\n            assert bool(static_host) == host_matching, (\n                \"Invalid static_host/host_matching combination\"\n            )\n            # Use a weakref to avoid creating a reference cycle between the app\n            # and the view function (see #3761).\n            self_ref = weakref.ref(self)\n            self.add_url_rule(\n                f\"{self.static_url_path}/<path:filename>\",\n                endpoint=\"static\",\n                host=static_host,\n                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore\n            )",
-    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "shell_command",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "6a776c7dc16e",
-    "issue_type": "eval_usage",
+    "file": "repos/AI-Code-Analyzer/analysis/git_archaeologist.py",
+    "chunk_id": "db2ac7ac7a1b",
+    "issue_type": "statistical_anomaly",
     "severity": "medium",
-    "patch_source": "rule_based",
-    "original_code": "def shell_command() -> None:\n    \"\"\"Run an interactive Python shell in the context of a given\n    Flask application.  The application will populate the default\n    namespace of this shell according to its configuration.\n\n    This is useful for executing small snippets of management code\n    without having to manually configure the application.\n    \"\"\"\n    import code\n\n    banner = (\n        f\"Python {sys.version} on {sys.platform}\\n\"\n        f\"App: {current_app.import_name}\\n\"\n        f\"Instance: {current_app.instance_path}\"\n    )\n    ctx: dict[str, t.Any] = {}\n\n    # Support the regular Python interpreter startup script if someone\n    # is using it.\n    startup = os.environ.get(\"PYTHONSTARTUP\")\n    if startup and os.path.isfile(startup):\n        with open(startup) as f:\n            eval(compile(f.read(), startup, \"exec\"), ctx)\n\n    ctx.update(current_app.make_shell_context())\n\n    # Site, customize, or startup script can set a hook to call when\n    # entering interactive mode. The default one sets up readline with\n    # tab and history completion.\n    interactive_hook = getattr(sys, \"__interactivehook__\", None)\n\n    if interactive_hook is not None:\n        try:\n            import readline\n            from rlcompleter import Completer\n        except ImportError:\n            pass\n        else:\n            # rlcompleter uses __main__.__dict__ by default, which is\n            # flask.__main__. Use the shell context instead.\n            readline.set_completer(Completer(ctx).complete)\n\n        interactive_hook()\n\n    code.interact(banner=banner, local=ctx)",
-    "suggested_fix": "Replace eval() with ast.literal_eval() for safe value parsing:\n\n  import ast\n  result = ast.literal_eval(expression)\n\nIf you need expression evaluation, use the `simpleeval` library.",
+    "patch_source": "llamacpp",
+    "original_code": "def __init__(self, commit_hash: str, content: Optional[str]):\n        self.commit_hash = commit_hash\n        self.content     = content\n        self.available   = content is not None",
+    "suggested_fix": "```python\ndef __init__(self, commit_hash: str, content: Optional[str]):\n        self.commit_hash = commit_hash\n        self.content = content  # Removed unnecessary spaces\n        self.available = content is not None\n```",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -57,33 +646,14 @@
     }
   },
   {
-    "function": "routes_command",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "cf3bc517966f",
-    "issue_type": "bare_except_swallow",
-    "severity": "high",
-    "patch_source": "rule_based",
-    "original_code": "def routes_command(sort: str, all_methods: bool) -> None:\n    \"\"\"Show all registered routes with endpoints and methods.\"\"\"\n    rules = list(current_app.url_map.iter_rules())\n\n    if not rules:\n        click.echo(\"No routes were registered.\")\n        return\n\n    ignored_methods = set() if all_methods else {\"HEAD\", \"OPTIONS\"}\n    host_matching = current_app.url_map.host_matching\n    has_domain = any(rule.host if host_matching else rule.subdomain for rule in rules)\n    rows = []\n\n    for rule in rules:\n        row = [\n            rule.endpoint,\n            \", \".join(sorted((rule.methods or set()) - ignored_methods)),\n        ]\n\n        if has_domain:\n            row.append((rule.host if host_matching else rule.subdomain) or \"\")\n\n        row.append(rule.rule)\n        rows.append(row)\n\n    headers = [\"Endpoint\", \"Methods\"]\n    sorts = [\"endpoint\", \"methods\"]\n\n    if has_domain:\n        headers.append(\"Host\" if host_matching else \"Subdomain\")\n        sorts.append(\"domain\")\n\n    headers.append(\"Rule\")\n    sorts.append(\"rule\")\n\n    try:\n        rows.sort(key=itemgetter(sorts.index(sort)))\n    except ValueError:\n        pass\n\n    rows.insert(0, headers)\n    widths = [max(len(row[i]) for row in rows) for i in range(len(headers))]\n    rows.insert(1, [\"-\" * w for w in widths])\n    template = \"  \".join(f\"{{{i}:<{w}}}\" for i, w in enumerate(widths))\n\n    for row in rows:\n        click.echo(template.format(*row))",
-    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "from_pyfile",
-    "file": "repos/flask/src/flask/config.py",
-    "chunk_id": "7b839ffa11cb",
-    "issue_type": "exec_usage",
+    "function": "clean",
+    "file": "repos/AI-Code-Analyzer/analysis/patch_verifier.py",
+    "chunk_id": "48948ca9f98f",
+    "issue_type": "statistical_anomaly",
     "severity": "medium",
-    "patch_source": "rule_based",
-    "original_code": "def from_pyfile(\n        self, filename: str | os.PathLike[str], silent: bool = False\n    ) -> bool:\n        \"\"\"Updates the values in the config from a Python file.  This function\n        behaves as if the file was imported as module with the\n        :meth:`from_object` function.\n\n        :param filename: the filename of the config.  This can either be an\n                         absolute filename or a filename relative to the\n                         root path.\n        :param silent: set to ``True`` if you want silent failure for missing\n                       files.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 0.7\n           `silent` parameter.\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n        d = types.ModuleType(\"config\")\n        d.__file__ = filename\n        try:\n            with open(filename, mode=\"rb\") as config_file:\n                exec(compile(config_file.read(), filename, \"exec\"), d.__dict__)\n        except OSError as e:\n            if silent and e.errno in (errno.ENOENT, errno.EISDIR, errno.ENOTDIR):\n                return False\n            e.strerror = f\"Unable to load configuration file ({e.strerror})\"\n            raise\n        self.from_object(d)\n        return True",
-    "suggested_fix": "Refactor dynamic execution into explicit callable functions:\n\n  # Instead of: exec(dynamic_code)\n  import importlib\n  module = importlib.import_module('my.module')\n  module.run()",
+    "patch_source": "llamacpp",
+    "original_code": "def clean(self) -> bool:\n        \"\"\"True only if everything passed with zero errors.\"\"\"\n        return self.runnable and self.failed == 0 and self.errors == 0",
+    "suggested_fix": "```python\ndef is_clean(self) -> bool:\n    \"\"\"True only if everything passed with zero errors.\"\"\"\n    return self.runnable and self.failed == 0 and self.errors == 0\n```",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -95,14 +665,90 @@
     }
   },
   {
-    "function": "from_prefixed_env",
-    "file": "repos/flask/src/flask/config.py",
-    "chunk_id": "4b14adf9d333",
-    "issue_type": "bare_except_swallow",
-    "severity": "high",
-    "patch_source": "rule_based",
-    "original_code": "def from_prefixed_env(\n        self, prefix: str = \"FLASK\", *, loads: t.Callable[[str], t.Any] = json.loads\n    ) -> bool:\n        \"\"\"Load any environment variables that start with ``FLASK_``,\n        dropping the prefix from the env key for the config key. Values\n        are passed through a loading function to attempt to convert them\n        to more specific types than strings.\n\n        Keys are loaded in :func:`sorted` order.\n\n        The default loading function attempts to parse values as any\n        valid JSON type, including dicts and lists.\n\n        Specific items in nested dicts can be set by separating the\n        keys with double underscores (``__``). If an intermediate key\n        doesn't exist, it will be initialized to an empty dict.\n\n        :param prefix: Load env vars that start with this prefix,\n            separated with an underscore (``_``).\n        :param loads: Pass each string value to this function and use\n            the returned value as the config value. If any error is\n            raised it is ignored and the value remains a string. The\n            default is :func:`json.loads`.\n\n        .. versionadded:: 2.1\n        \"\"\"\n        prefix = f\"{prefix}_\"\n\n        for key in sorted(os.environ):\n            if not key.startswith(prefix):\n                continue\n\n            value = os.environ[key]\n            key = key.removeprefix(prefix)\n\n            try:\n                value = loads(value)\n            except Exception:\n                # Keep the value as a string if loading failed.\n                pass\n\n            if \"__\" not in key:\n                # A non-nested key, set directly.\n                self[key] = value\n                continue\n\n            # Traverse nested dictionaries with keys separated by \"__\".\n            current = self\n            *parts, tail = key.split(\"__\")\n\n            for part in parts:\n                # If an intermediate dict does not exist, create it.\n                if part not in current:\n                    current[part] = {}\n\n                current = current[part]\n\n            current[tail] = value\n\n        return True",
-    "suggested_fix": "Catch specific exceptions and log them:\n\n  import logging\n  logger = logging.getLogger(__name__)\n\n  try:\n      ...\n  except SomeSpecificError as exc:\n      logger.exception('Error in <context>: %s', exc)\n      raise",
+    "function": "_check_sklearn",
+    "file": "repos/AI-Code-Analyzer/analysis/anomaly_detector.py",
+    "chunk_id": "1d9e1e975266",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "llamacpp",
+    "original_code": "def _check_sklearn() -> bool:\n        \"\"\"Return True if scikit-learn is installed.\"\"\"\n        try:\n            import sklearn\n            return True\n        except ImportError:\n            logger.warning(\n                \"scikit-learn not installed \u2014 anomaly detection disabled. \"\n                \"Install with: pip install scikit-learn\"\n            )\n            return False",
+    "suggested_fix": "```python\ndef _check_sklearn() -> bool:\n    \"\"\"Return True if scikit-learn is installed.\"\"\"\n    try:\n        import sklearn\n        return True\n    except ImportError:\n        # Added logger import\n        import logging\n        logger = logging.getLogger(__name__)\n        logger.warning(\n            \"scikit-learn not installed \u2014 anomaly detection disabled. \"\n            \"Install with: pip install scikit-learn\"\n        )\n        return False\n```",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "_extract",
+    "file": "repos/AI-Code-Analyzer/analysis/patch_verifier.py",
+    "chunk_id": "caee3a1d53c0",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "llamacpp",
+    "original_code": "def _extract(pattern: re.Pattern, text: str) -> int:\n        \"\"\"Extract first integer match from text, or 0.\"\"\"\n        match = pattern.search(text)\n        return int(match.group(1)) if match else 0",
+    "suggested_fix": "```python\ndef _extract(pattern: re.Pattern, text: str) -> int:\n    \"\"\"Extract first integer match from text, or 0.\"\"\"\n    match = pattern.search(text)\n    return int(match.group(1)) if match and match.group(1).isdigit() else 0  # Added check to ensure the matched group is a digit\n```",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "llm_available",
+    "file": "repos/AI-Code-Analyzer/config.py",
+    "chunk_id": "3d7ae9d3a61d",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "llamacpp",
+    "original_code": "def llm_available(self) -> bool:\n        if self.llm_provider == \"llamacpp\":\n            return True\n        if self.llm_provider == \"anthropic\":\n            return bool(self.api_key)\n        if self.llm_provider == \"groq\":\n            return bool(self.groq_api_key)\n        if self.llm_provider == \"ollama\":\n            return True\n        return False",
+    "suggested_fix": "```python\ndef llm_available(self) -> bool:\n    # Removed redundant checks for 'llamacpp' and 'ollama'\n    if self.llm_provider == \"anthropic\":\n        return bool(self.api_key)\n    if self.llm_provider == \"groq\":\n        return bool(self.groq_api_key)\n    return False\n```",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "age_description",
+    "file": "repos/AI-Code-Analyzer/analysis/git_archaeologist.py",
+    "chunk_id": "149ed095481c",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "llamacpp",
+    "original_code": "def age_description(self) -> str:\n        d = self.days_ago\n        if d < 0:\n            return \"unknown age\"\n        if d == 0:\n            return \"introduced today\"\n        if d == 1:\n            return \"introduced yesterday\"\n        if d < 7:\n            return f\"introduced {d} days ago\"\n        if d < 30:\n            return f\"introduced {d // 7} week(s) ago\"\n        if d < 365:\n            return f\"introduced {d // 30} month(s) ago\"\n        return f\"introduced {d // 365} year(s) ago\"",
+    "suggested_fix": "```python\ndef age_description(self) -> str:\n    d = self.days_ago\n    if d < 0:\n        return \"unknown age\"\n    if d == 0:\n        return \"introduced today\"\n    if d == 1:\n        return \"introduced yesterday\"\n    if d < 7:\n        return f\"introduced {d} days ago\"\n    if d < 30:\n        return f\"introduced {d // 7} week{'s' if d // 7 > 1 else ''} ago\"  # Added pluralization for weeks\n    if d < 365:\n        return f\"introduced {d // 30} month{'s' if d // 30 > 1 else ''} ago\"  # Added pluralization for months\n    return f\"introduced {d // 365} year{'s' if d // 365 > 1 else ''} ago\"  # Added pluralization for years\n```",
+    "verification": {
+      "verified": null,
+      "baseline_pass": 0,
+      "baseline_fail": 0,
+      "after_pass": null,
+      "after_fail": null,
+      "confidence_boost": 0.0,
+      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
+    }
+  },
+  {
+    "function": "_cosine_similarity",
+    "file": "repos/AI-Code-Analyzer/embeddings/similarity_search.py",
+    "chunk_id": "1201f91eb62b",
+    "issue_type": "statistical_anomaly",
+    "severity": "medium",
+    "patch_source": "llamacpp",
+    "original_code": "def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:\n        \"\"\"\n        Compute cosine similarity between two vectors.\n        Returns 0.0 if either vector has zero magnitude.\n        \"\"\"\n        norm = np.linalg.norm(a) * np.linalg.norm(b)\n        if norm == 0.0:\n            return 0.0\n        return float(np.dot(a, b) / norm)",
+    "suggested_fix": "```python\ndef _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:\n    \"\"\"\n    Compute cosine similarity between two vectors.\n    Returns 0.0 if either vector has zero magnitude.\n    \"\"\"\n    norm = np.linalg.norm(a) * np.linalg.norm(b)\n    if norm == 0.0:\n        return 0.0\n    return np.dot(a, b) / norm  # Removed unnecessary float conversion\n```",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -115,298 +761,13 @@
   },
   {
     "function": "__init__",
-    "file": "repos/flask/src/flask/debughelpers.py",
-    "chunk_id": "7fc030feb304",
-    "issue_type": "assert_in_production",
+    "file": "repos/AI-Code-Analyzer/embeddings/embed_functions.py",
+    "chunk_id": "5303faf507fd",
+    "issue_type": "dna_violation",
     "severity": "low",
-    "patch_source": "rule_based",
-    "original_code": "def __init__(self, request: Request) -> None:\n        exc = request.routing_exception\n        assert isinstance(exc, RequestRedirect)\n        buf = [\n            f\"A request was sent to '{request.url}', but routing issued\"\n            f\" a redirect to the canonical URL '{exc.new_url}'.\"\n        ]\n\n        if f\"{request.base_url}/\" == exc.new_url.partition(\"?\")[0]:\n            buf.append(\n                \" The URL was defined with a trailing slash. Flask\"\n                \" will redirect to the URL with a trailing slash if it\"\n                \" was accessed without one.\"\n            )\n\n        buf.append(\n            \" Send requests to the canonical URL, or use 307 or 308 for\"\n            \" routing redirects. Otherwise, browsers will drop form\"\n            \" data.\\n\\n\"\n            \"This exception is only raised in debug mode.\"\n        )\n        super().__init__(\"\".join(buf))",
-    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "_endpoint_from_view_func",
-    "file": "repos/flask/src/flask/sansio/scaffold.py",
-    "chunk_id": "b98a0333398f",
-    "issue_type": "assert_in_production",
-    "severity": "low",
-    "patch_source": "rule_based",
-    "original_code": "def _endpoint_from_view_func(view_func: ft.RouteCallable) -> str:\n    \"\"\"Internal helper that returns the default endpoint for a given\n    function.  This always is the function name.\n    \"\"\"\n    assert view_func is not None, \"expected view func if endpoint is not provided.\"\n    return view_func.__name__",
-    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "dispatch_request",
-    "file": "repos/flask/src/flask/views.py",
-    "chunk_id": "14e1389fc333",
-    "issue_type": "assert_in_production",
-    "severity": "low",
-    "patch_source": "rule_based",
-    "original_code": "def dispatch_request(self, **kwargs: t.Any) -> ft.ResponseReturnValue:\n        meth = getattr(self, request.method.lower(), None)\n\n        # If the request method is HEAD and we don't have a handler for it\n        # retry with GET.\n        if meth is None and request.method == \"HEAD\":\n            meth = getattr(self, \"get\", None)\n\n        assert meth is not None, f\"Unimplemented method {request.method!r}\"\n        return current_app.ensure_sync(meth)(**kwargs)  # type: ignore[no-any-return]",
-    "suggested_fix": "Replace assert with an explicit guard:\n\n  # Instead of: assert condition, 'message'\n  if not condition:\n      raise ValueError('message')\n\nassert is stripped when Python runs with -O flag.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "logout",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "959883243316",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def logout():\n    \"\"\"Clear the current session, including the stored user id.\"\"\"\n    session.clear()\n    return redirect(url_for(\"index\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "get_post",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "27f05133ab09",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def get_post(id, check_author=True):\n    \"\"\"Get a post and its author by id.\n\n    Checks that the id exists and optionally that the current user is\n    the author.\n\n    :param id: id of post to get\n    :param check_author: require the current user to be the author\n    :return: the post with author information\n    :raise 404: if a post with the given id doesn't exist\n    :raise 403: if the current user isn't the author\n    \"\"\"\n    post = (\n        get_db()\n        .execute(\n            \"SELECT p.id, title, body, created, author_id, username\"\n            \" FROM post p JOIN user u ON p.author_id = u.id\"\n            \" WHERE p.id = ?\",\n            (id,),\n        )\n        .fetchone()\n    )\n\n    if post is None:\n        abort(404, f\"Post id {id} doesn't exist.\")\n\n    if check_author and post[\"author_id\"] != g.user[\"id\"]:\n        abort(403)\n\n    return post",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "init_db",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "70e94a4bb545",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def init_db():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    db = get_db()\n\n    with current_app.open_resource(\"schema.sql\") as f:\n        db.executescript(f.read().decode(\"utf8\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "init_db_command",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "03b5c748f3e9",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def init_db_command():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    init_db()\n    click.echo(\"Initialized the database.\")",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "create_url_adapter",
-    "file": "repos/flask/src/flask/app.py",
-    "chunk_id": "ec8a9e7682b6",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def create_url_adapter(self, request: Request | None) -> MapAdapter | None:\n        \"\"\"Creates a URL adapter for the given request. The URL adapter\n        is created at a point where the request context is not yet set\n        up so the request is passed explicitly.\n\n        .. versionchanged:: 3.1\n            If :data:`SERVER_NAME` is set, it does not restrict requests to\n            only that domain, for both ``subdomain_matching`` and\n            ``host_matching``.\n\n        .. versionchanged:: 1.0\n            :data:`SERVER_NAME` no longer implicitly enables subdomain\n            matching. Use :attr:`subdomain_matching` instead.\n\n        .. versionchanged:: 0.9\n           This can be called outside a request when the URL adapter is created\n           for an application context.\n\n        .. versionadded:: 0.6\n        \"\"\"\n        if request is not None:\n            if (trusted_hosts := self.config[\"TRUSTED_HOSTS\"]) is not None:\n                request.trusted_hosts = trusted_hosts\n\n            # Check trusted_hosts here until bind_to_environ does.\n            request.host = get_host(request.environ, request.trusted_hosts)  # pyright: ignore\n            subdomain = None\n            server_name = self.config[\"SERVER_NAME\"]\n\n            if self.url_map.host_matching:\n                # Don't pass SERVER_NAME, otherwise it's used and the actual\n                # host is ignored, which breaks host matching.\n                server_name = None\n            elif not self.subdomain_matching:\n                # Werkzeug doesn't implement subdomain matching yet. Until then,\n                # disable it by forcing the current subdomain to the default, or\n                # the empty string.\n                subdomain = self.url_map.default_subdomain or \"\"\n\n            return self.url_map.bind_to_environ(\n                request.environ, server_name=server_name, subdomain=subdomain\n            )\n\n        # Need at least SERVER_NAME to match/build outside a request.\n        if self.config[\"SERVER_NAME\"] is not None:\n            return self.url_map.bind(\n                self.config[\"SERVER_NAME\"],\n                script_name=self.config[\"APPLICATION_ROOT\"],\n                url_scheme=self.config[\"PREFERRED_URL_SCHEME\"],\n            )\n\n        return None",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "_path_is_ancestor",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "15944066f3fa",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def _path_is_ancestor(path: str, other: str) -> bool:\n    \"\"\"Take ``other`` and remove the length of ``path`` from it. Then join it\n    to ``path``. If it is the original value, ``path`` is an ancestor of\n    ``other``.\"\"\"\n    return os.path.join(path, other[len(path) :].lstrip(os.sep)) == other",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "convert",
-    "file": "repos/flask/src/flask/cli.py",
-    "chunk_id": "5deff2592660",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def convert(\n        self, value: t.Any, param: click.Parameter | None, ctx: click.Context | None\n    ) -> t.Any:\n        try:\n            import ssl\n        except ImportError:\n            raise click.BadParameter(\n                'Using \"--cert\" requires Python to be compiled with SSL support.',\n                ctx,\n                param,\n            ) from None\n\n        try:\n            return self.path_type(value, param, ctx)\n        except click.BadParameter:\n            value = click.STRING(value, param, ctx).lower()\n\n            if value == \"adhoc\":\n                try:\n                    import cryptography  # noqa: F401\n                except ImportError:\n                    raise click.BadParameter(\n                        \"Using ad-hoc certificates requires the cryptography library.\",\n                        ctx,\n                        param,\n                    ) from None\n\n                return value\n\n            obj = import_string(value, silent=True)\n\n            if isinstance(obj, ssl.SSLContext):\n                return obj\n\n            raise",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "_split_blueprint_path",
-    "file": "repos/flask/src/flask/helpers.py",
-    "chunk_id": "fc439ffbe655",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def _split_blueprint_path(name: str) -> list[str]:\n    out: list[str] = [name]\n\n    if \".\" in name:\n        out.extend(_split_blueprint_path(name.rpartition(\".\")[0]))\n\n    return out",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "stream_with_context",
-    "file": "repos/flask/src/flask/helpers.py",
-    "chunk_id": "bfc41d860c49",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def stream_with_context(\n    generator_or_function: t.Iterator[t.AnyStr],\n) -> t.Iterator[t.AnyStr]: ...",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "raise_any",
-    "file": "repos/flask/src/flask/helpers.py",
-    "chunk_id": "910ccdc1251a",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def raise_any(self, message: str) -> None:\n        \"\"\"Raise if any errors were collected.\"\"\"\n        if self.errors:\n            if sys.version_info >= (3, 11):\n                raise BaseExceptionGroup(message, self.errors)  # noqa: F821\n            else:\n                raise self.errors[0]",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "loads",
-    "file": "repos/flask/src/flask/json/provider.py",
-    "chunk_id": "7184dcb9beea",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def loads(self, s: str | bytes, **kwargs: t.Any) -> t.Any:\n        \"\"\"Deserialize data as JSON.\n\n        :param s: Text or UTF-8 bytes.\n        :param kwargs: May be passed to the underlying JSON library.\n        \"\"\"\n        raise NotImplementedError",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "check",
-    "file": "repos/flask/src/flask/json/tag.py",
-    "chunk_id": "542c69c0845a",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def check(self, value: t.Any) -> bool:\n        \"\"\"Check if the given value should be tagged by this tag.\"\"\"\n        raise NotImplementedError",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "check",
-    "file": "repos/flask/src/flask/json/tag.py",
-    "chunk_id": "00fb9a920509",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def check(self, value: t.Any) -> bool:\n        return (\n            isinstance(value, dict)\n            and len(value) == 1\n            and next(iter(value)) in self.serializer.tags\n        )",
-    "suggested_fix": "No automated patch available. Manual review required.",
+    "patch_source": "llamacpp",
+    "original_code": "def __init__(self, config: PipelineConfig = DEFAULT_CONFIG):\n        logger.info(\"Loading embedding model: %s\", config.embedding_model)\n        try:\n            self._model = SentenceTransformer(config.embedding_model)\n        except Exception as exc:\n            raise EmbeddingError(f\"Failed to load embedding model '{config.embedding_model}': {exc}\") from exc\n        logger.info(\"Embedding model ready\")",
+    "suggested_fix": "```python\ndef __init__(self, config: PipelineConfig = DEFAULT_CONFIG) -> None:\n        logger.info(\"Loading embedding model: %s\", config.embedding_model)\n        try:\n            self._model = SentenceTransformer(config.embedding_model)\n        except Exception as exc:\n            raise EmbeddingError(f\"Failed to load embedding model '{config.embedding_model}': {exc}\") from exc\n        logger.info(\"Embedding model ready\")\n```",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -419,108 +780,13 @@
   },
   {
     "function": "__init__",
-    "file": "repos/flask/src/flask/json/tag.py",
-    "chunk_id": "7c60e2bdce02",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def __init__(self) -> None:\n        self.tags: dict[str, JSONTag] = {}\n        self.order: list[JSONTag] = []\n\n        for cls in self.default_tags:\n            self.register(cls)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "select_jinja_autoescape",
-    "file": "repos/flask/src/flask/sansio/app.py",
-    "chunk_id": "f300fafc4413",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def select_jinja_autoescape(self, filename: str | None) -> bool:\n        \"\"\"Returns ``True`` if autoescaping should be active for the given\n        template name. If no template name is given, returns `True`.\n\n        .. versionchanged:: 2.2\n            Autoescaping is now enabled by default for ``.svg`` files.\n\n        .. versionadded:: 0.5\n        \"\"\"\n        if filename is None:\n            return True\n        return filename.endswith((\".html\", \".htm\", \".xml\", \".xhtml\", \".svg\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "register",
-    "file": "repos/flask/src/flask/sansio/blueprints.py",
-    "chunk_id": "d7d76070dfad",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "if bp_subdomain is None:\n                bp_subdomain = blueprint.subdomain\n\n            if state.subdomain is not None and bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain + \".\" + state.subdomain\n            elif bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain\n            elif state.subdomain is not None:\n                bp_options[\"subdomain\"] = state.subdomain\n\n            if bp_url_prefix is None:\n                bp_url_prefix = blueprint.url_prefix\n\n            if state.url_prefix is not None and bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = (\n                    state.url_prefix.rstrip(\"/\") + \"/\" + bp_url_prefix.lstrip(\"/\")\n                )\n            elif bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = bp_url_prefix\n            elif state.url_prefix is not None:\n                bp_options[\"url_prefix\"] = state.url_prefix\n\n            bp_options[\"name_prefix\"] = name\n            blueprint.register(app, bp_options)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "static_folder",
-    "file": "repos/flask/src/flask/sansio/scaffold.py",
-    "chunk_id": "2fb78115bb91",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def static_folder(self, value: str | os.PathLike[str] | None) -> None:\n        if value is not None:\n            value = os.fspath(value).rstrip(r\"\\/\")\n\n        self._static_folder = value",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "max_form_memory_size",
-    "file": "repos/flask/src/flask/wrappers.py",
-    "chunk_id": "02dac0799461",
-    "issue_type": "statistical_anomaly",
-    "severity": "medium",
-    "patch_source": "none",
-    "original_code": "def max_form_memory_size(self) -> int | None:\n        \"\"\"The maximum size in bytes any non-file form field may be in a\n        ``multipart/form-data`` body. If this limit is exceeded, a 413\n        :exc:`~werkzeug.exceptions.RequestEntityTooLarge` error is raised. If it\n        is set to ``None``, no limit is enforced at the Flask application level.\n\n        Each request defaults to the :data:`MAX_FORM_MEMORY_SIZE` config, which\n        defaults to ``500_000``. It can be set on a specific ``request`` to\n        apply the limit to that specific view. This should be set appropriately\n        based on an application's or view's specific needs.\n\n        .. versionchanged:: 3.1\n            This is configurable through Flask config.\n        \"\"\"\n        if self._max_form_memory_size is not None:\n            return self._max_form_memory_size\n\n        if not current_app:\n            return super().max_form_memory_size\n\n        return current_app.config[\"MAX_FORM_MEMORY_SIZE\"]  # type: ignore[no-any-return]",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "github_link",
-    "file": "repos/flask/docs/conf.py",
-    "chunk_id": "600175444fa9",
+    "file": "repos/AI-Code-Analyzer/embeddings/similarity_search.py",
+    "chunk_id": "e0527378bf1b",
     "issue_type": "dna_violation",
     "severity": "low",
-    "patch_source": "none",
-    "original_code": "def github_link(name, rawtext, text, lineno, inliner, options=None, content=None):\n    app = inliner.document.settings.env.app\n    release = app.config.release\n    base_url = \"https://github.com/pallets/flask/tree/\"\n\n    if text.endswith(\">\"):\n        words, text = text[:-1].rsplit(\"<\", 1)\n        words = words.strip()\n    else:\n        words = None\n\n    if packaging.version.parse(release).is_devrelease:\n        url = f\"{base_url}main/{text}\"\n    else:\n        url = f\"{base_url}{release}/{text}\"\n\n    if words is None:\n        words = url\n\n    from docutils.nodes import reference\n    from docutils.parsers.rst.roles import set_classes\n\n    options = options or {}\n    set_classes(options)\n    node = reference(rawtext, words, refuri=url, **options)\n    return [node], []",
-    "suggested_fix": "No automated patch available. Manual review required.",
+    "patch_source": "llamacpp",
+    "original_code": "def __init__(\n        self,\n        embedder:  CodeEmbedder,\n        config:    PipelineConfig = DEFAULT_CONFIG,\n    ):\n        self._embedder  = embedder\n        self._threshold = config.similarity_threshold\n        self._patterns  = self._embed_known_patterns()\n\n        logger.info(\n            \"SimilarityDetector ready \u2014 %d patterns embedded, threshold=%.2f\",\n            len(self._patterns), self._threshold,\n        )",
+    "suggested_fix": "```python\ndef __init__(\n        self,\n        embedder: CodeEmbedder,\n        config: PipelineConfig = DEFAULT_CONFIG,\n) -> None:\n    self._embedder  = embedder\n    self._threshold = config.similarity_threshold\n    self._patterns  = self._embed_known_patterns()\n\n    logger.info(\n        \"SimilarityDetector ready \u2014 %d patterns embedded, threshold=%.2f\",\n        len(self._patterns), self._threshold,\n    )\n```\n# Added return type annotation `-> None`",
     "verification": {
       "verified": null,
       "baseline_pass": 0,
@@ -532,451 +798,14 @@
     }
   },
   {
-    "function": "add",
-    "file": "repos/flask/examples/javascript/js_example/views.py",
-    "chunk_id": "b4c76a3f8ce5",
+    "function": "run_pipeline",
+    "file": "repos/AI-Code-Analyzer/analyze_repo.py",
+    "chunk_id": "3a84f6155963",
     "issue_type": "dna_violation",
     "severity": "low",
-    "patch_source": "none",
-    "original_code": "def add():\n    a = request.form.get(\"a\", 0, type=float)\n    b = request.form.get(\"b\", 0, type=float)\n    return jsonify(result=a + b)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "create_app",
-    "file": "repos/flask/examples/tutorial/flaskr/__init__.py",
-    "chunk_id": "650c1843163d",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def create_app(test_config=None):\n    \"\"\"Create and configure an instance of the Flask application.\"\"\"\n    app = Flask(__name__, instance_relative_config=True)\n    app.config.from_mapping(\n        # a default secret that should be overridden by instance config\n        SECRET_KEY=\"dev\",\n        # store the database in the instance folder\n        DATABASE=os.path.join(app.instance_path, \"flaskr.sqlite\"),\n    )\n\n    if test_config is None:\n        # load the instance config, if it exists, when not testing\n        app.config.from_pyfile(\"config.py\", silent=True)\n    else:\n        # load the test config if passed in\n        app.config.update(test_config)\n\n    # ensure the instance folder exists\n    os.makedirs(app.instance_path, exist_ok=True)\n\n    @app.route(\"/hello\")\n    def hello():\n        return \"Hello, World!\"\n\n    # register the database commands\n    from . import db\n\n    db.init_app(app)\n\n    # apply the blueprints to the app\n    from . import auth\n    from . import blog\n\n    app.register_blueprint(auth.bp)\n    app.register_blueprint(blog.bp)\n\n    # make url_for('index') == url_for('blog.index')\n    # in another app, you might define a separate main index here with\n    # app.route, while giving the blog blueprint a url_prefix, but for\n    # the tutorial the blog will be the main index\n    app.add_url_rule(\"/\", endpoint=\"index\")\n\n    return app",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "login_required",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "c21de959b924",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def login_required(view):\n    \"\"\"View decorator that redirects anonymous users to the login page.\"\"\"\n\n    @functools.wraps(view)\n    def wrapped_view(**kwargs):\n        if g.user is None:\n            return redirect(url_for(\"auth.login\"))\n\n        return view(**kwargs)\n\n    return wrapped_view",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "load_logged_in_user",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "859f81beb60b",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def load_logged_in_user():\n    \"\"\"If a user id is stored in the session, load the user object from\n    the database into ``g.user``.\"\"\"\n    user_id = session.get(\"user_id\")\n\n    if user_id is None:\n        g.user = None\n    else:\n        g.user = (\n            get_db().execute(\"SELECT * FROM user WHERE id = ?\", (user_id,)).fetchone()\n        )",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "register",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "d537d2c71b15",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def register():\n    \"\"\"Register a new user.\n\n    Validates that the username is not already taken. Hashes the\n    password for security.\n    \"\"\"\n    if request.method == \"POST\":\n        username = request.form[\"username\"]\n        password = request.form[\"password\"]\n        db = get_db()\n        error = None\n\n        if not username:\n            error = \"Username is required.\"\n        elif not password:\n            error = \"Password is required.\"\n\n        if error is None:\n            try:\n                db.execute(\n                    \"INSERT INTO user (username, password) VALUES (?, ?)\",\n                    (username, generate_password_hash(password)),\n                )\n                db.commit()\n            except db.IntegrityError:\n                # The username was already taken, which caused the\n                # commit to fail. Show a validation error.\n                error = f\"User {username} is already registered.\"\n            else:\n                # Success, go to the login page.\n                return redirect(url_for(\"auth.login\"))\n\n        flash(error)\n\n    return render_template(\"auth/register.html\")",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "login",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "4143b0d3cc4f",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def login():\n    \"\"\"Log in a registered user by adding the user id to the session.\"\"\"\n    if request.method == \"POST\":\n        username = request.form[\"username\"]\n        password = request.form[\"password\"]\n        db = get_db()\n        error = None\n        user = db.execute(\n            \"SELECT * FROM user WHERE username = ?\", (username,)\n        ).fetchone()\n\n        if user is None:\n            error = \"Incorrect username.\"\n        elif not check_password_hash(user[\"password\"], password):\n            error = \"Incorrect password.\"\n\n        if error is None:\n            # store the user id in a new session and return to the index\n            session.clear()\n            session[\"user_id\"] = user[\"id\"]\n            return redirect(url_for(\"index\"))\n\n        flash(error)\n\n    return render_template(\"auth/login.html\")",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "logout",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "959883243316",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def logout():\n    \"\"\"Clear the current session, including the stored user id.\"\"\"\n    session.clear()\n    return redirect(url_for(\"index\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "wrapped_view",
-    "file": "repos/flask/examples/tutorial/flaskr/auth.py",
-    "chunk_id": "ab6375ebf71e",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def wrapped_view(**kwargs):\n        if g.user is None:\n            return redirect(url_for(\"auth.login\"))\n\n        return view(**kwargs)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "get_post",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "27f05133ab09",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def get_post(id, check_author=True):\n    \"\"\"Get a post and its author by id.\n\n    Checks that the id exists and optionally that the current user is\n    the author.\n\n    :param id: id of post to get\n    :param check_author: require the current user to be the author\n    :return: the post with author information\n    :raise 404: if a post with the given id doesn't exist\n    :raise 403: if the current user isn't the author\n    \"\"\"\n    post = (\n        get_db()\n        .execute(\n            \"SELECT p.id, title, body, created, author_id, username\"\n            \" FROM post p JOIN user u ON p.author_id = u.id\"\n            \" WHERE p.id = ?\",\n            (id,),\n        )\n        .fetchone()\n    )\n\n    if post is None:\n        abort(404, f\"Post id {id} doesn't exist.\")\n\n    if check_author and post[\"author_id\"] != g.user[\"id\"]:\n        abort(403)\n\n    return post",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "index",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "31b12d6eb76b",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def index():\n    \"\"\"Show all the posts, most recent first.\"\"\"\n    db = get_db()\n    posts = db.execute(\n        \"SELECT p.id, title, body, created, author_id, username\"\n        \" FROM post p JOIN user u ON p.author_id = u.id\"\n        \" ORDER BY created DESC\"\n    ).fetchall()\n    return render_template(\"blog/index.html\", posts=posts)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "create",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "f1eb4b41ef1d",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def create():\n    \"\"\"Create a new post for the current user.\"\"\"\n    if request.method == \"POST\":\n        title = request.form[\"title\"]\n        body = request.form[\"body\"]\n        error = None\n\n        if not title:\n            error = \"Title is required.\"\n\n        if error is not None:\n            flash(error)\n        else:\n            db = get_db()\n            db.execute(\n                \"INSERT INTO post (title, body, author_id) VALUES (?, ?, ?)\",\n                (title, body, g.user[\"id\"]),\n            )\n            db.commit()\n            return redirect(url_for(\"blog.index\"))\n\n    return render_template(\"blog/create.html\")",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "update",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "2aa7a2e8dd8a",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def update(id):\n    \"\"\"Update a post if the current user is the author.\"\"\"\n    post = get_post(id)\n\n    if request.method == \"POST\":\n        title = request.form[\"title\"]\n        body = request.form[\"body\"]\n        error = None\n\n        if not title:\n            error = \"Title is required.\"\n\n        if error is not None:\n            flash(error)\n        else:\n            db = get_db()\n            db.execute(\n                \"UPDATE post SET title = ?, body = ? WHERE id = ?\", (title, body, id)\n            )\n            db.commit()\n            return redirect(url_for(\"blog.index\"))\n\n    return render_template(\"blog/update.html\", post=post)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "delete",
-    "file": "repos/flask/examples/tutorial/flaskr/blog.py",
-    "chunk_id": "b52ab089c1cb",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def delete(id):\n    \"\"\"Delete a post.\n\n    Ensures that the post exists and that the logged in user is the\n    author of the post.\n    \"\"\"\n    get_post(id)\n    db = get_db()\n    db.execute(\"DELETE FROM post WHERE id = ?\", (id,))\n    db.commit()\n    return redirect(url_for(\"blog.index\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "get_db",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "f3b0035f9300",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def get_db():\n    \"\"\"Connect to the application's configured database. The connection\n    is unique for each request and will be reused if this is called\n    again.\n    \"\"\"\n    if \"db\" not in g:\n        g.db = sqlite3.connect(\n            current_app.config[\"DATABASE\"], detect_types=sqlite3.PARSE_DECLTYPES\n        )\n        g.db.row_factory = sqlite3.Row\n\n    return g.db",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "close_db",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "57281168c785",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def close_db(e=None):\n    \"\"\"If this request connected to the database, close the\n    connection.\n    \"\"\"\n    db = g.pop(\"db\", None)\n\n    if db is not None:\n        db.close()",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "init_db",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "70e94a4bb545",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def init_db():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    db = get_db()\n\n    with current_app.open_resource(\"schema.sql\") as f:\n        db.executescript(f.read().decode(\"utf8\"))",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "init_db_command",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "03b5c748f3e9",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def init_db_command():\n    \"\"\"Clear existing data and create new tables.\"\"\"\n    init_db()\n    click.echo(\"Initialized the database.\")",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "init_app",
-    "file": "repos/flask/examples/tutorial/flaskr/db.py",
-    "chunk_id": "c4749857d414",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "def init_app(app):\n    \"\"\"Register database functions with the Flask app. This is called by\n    the application factory.\n    \"\"\"\n    app.teardown_appcontext(close_db)\n    app.cli.add_command(init_db_command)",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "run",
-    "file": "repos/flask/src/flask/app.py",
-    "chunk_id": "59b39e37e0c2",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "# if set, env var overrides existing value\n            if \"FLASK_DEBUG\" in os.environ:\n                self.debug = get_debug_flag()\n\n        # debug passed to method overrides all other sources\n        if debug is not None:\n            self.debug = bool(debug)\n\n        server_name = self.config.get(\"SERVER_NAME\")\n        sn_host = sn_port = None\n\n        if server_name:\n            sn_host, _, sn_port = server_name.partition(\":\")\n\n        if not host:\n            if sn_host:\n                host = sn_host\n            else:\n                host = \"127.0.0.1\"\n\n        if port or port == 0:\n            port = int(port)\n        elif sn_port:\n            port = int(sn_port)\n        else:\n            port = 5000\n\n        options.setdefault(\"use_reloader\", self.debug)\n        options.setdefault(\"use_debugger\", self.debug)\n        options.setdefault(\"threaded\", True)\n\n        cli.show_server_banner(self.debug, self.name)\n\n        from werkzeug.serving import run_simple\n\n        try:\n            run_simple(t.cast(str, host), port, self, **options)\n        finally:\n            # reset the first request information if the development server\n            # reset normally.  This makes it possible to restart the server\n            # without reloader and that stuff from an interactive shell.\n            self._got_first_request = False",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "url_for",
-    "file": "repos/flask/src/flask/app.py",
-    "chunk_id": "fb635ece8956",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "if url_adapter is None:\n                raise RuntimeError(\n                    \"Unable to build URLs outside an active request\"\n                    \" without 'SERVER_NAME' configured. Also configure\"\n                    \" 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as\"\n                    \" needed.\"\n                )\n\n            # When outside a request, generate a URL with scheme and\n            # domain by default.\n            if _external is None:\n                _external = True\n\n        # It is an error to set _scheme when _external=False, in order\n        # to avoid accidental insecure URLs.\n        if _scheme is not None and not _external:\n            raise ValueError(\"When specifying '_scheme', '_external' must be True.\")\n\n        self.inject_url_defaults(endpoint, values)\n\n        try:\n            rv = url_adapter.build(  # type: ignore[union-attr]\n                endpoint,\n                values,\n                method=_method,\n                url_scheme=_scheme,\n                force_external=_external,\n            )\n        except BuildError as error:\n            values.update(\n                _anchor=_anchor, _method=_method, _scheme=_scheme, _external=_external\n            )\n            return self.handle_url_build_error(error, endpoint, values)\n\n        if _anchor is not None:\n            _anchor = _url_quote(_anchor, safe=\"%!#$&'()*+,/:;=?@\")\n            rv = f\"{rv}#{_anchor}\"\n\n        return rv",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "make_response",
-    "file": "repos/flask/src/flask/app.py",
-    "chunk_id": "c1c78d9f6d5c",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "# the body must not be None\n        if rv is None:\n            raise TypeError(\n                f\"The view function for {request.endpoint!r} did not\"\n                \" return a valid response. The function either returned\"\n                \" None or ended without a return statement.\"\n            )\n\n        # make sure the body is an instance of the response class\n        if not isinstance(rv, self.response_class):\n            if isinstance(rv, (str, bytes, bytearray)) or isinstance(rv, cabc.Iterator):\n                # let the response class set the status and headers instead of\n                # waiting to do it manually, so that the class can handle any\n                # special logic\n                rv = self.response_class(\n                    rv,  # pyright: ignore\n                    status=status,\n                    headers=headers,  # type: ignore[arg-type]\n                )\n                status = headers = None\n            elif isinstance(rv, (dict, list)):\n                rv = self.json.response(rv)\n            elif isinstance(rv, BaseResponse) or callable(rv):\n                # evaluate a WSGI callable, or coerce a different response\n                # class to the correct type\n                try:\n                    rv = self.response_class.force_type(\n                        rv,  # type: ignore[arg-type]\n                        request.environ,\n                    )\n                except TypeError as e:\n                    raise TypeError(\n                        f\"{e}\\nThe view function did not return a valid\"\n                        \" response. The return type must be a string,\"\n                        \" dict, list, tuple with headers or status,\"\n                        \" Response instance, or WSGI callable, but it\"\n                        f\" was a {type(rv).__name__}.\"\n                    ).with_traceback(sys.exc_info()[2]) from None\n            else:\n                raise TypeError(\n                    \"The view function did not return a valid\"\n                    \" response. The return type must be a string,\"\n                    \" dict, list, tuple with headers or status,\"\n                    \" Response instance, or WSGI callable, but it was a\"\n                    f\" {type(rv).__name__}.\"\n                )\n\n        rv = t.cast(Response, rv)\n        # prefer the status if it was provided\n        if status is not None:\n            if isinstance(status, (str, bytes, bytearray)):\n                rv.status = status\n            else:\n                rv.status_code = status\n\n        # extend existing headers with provided headers\n        if headers:\n            rv.headers.update(headers)\n\n        return rv",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "stream_with_context",
-    "file": "repos/flask/src/flask/helpers.py",
-    "chunk_id": "75e6be0c8be1",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "# Execute the generator to the sentinel value. This captures the current\n    # context and pushes it to preserve it. Further iteration will yield from\n    # the original iterator.\n    wrapped_g = generator()\n    next(wrapped_g)\n    return wrapped_g",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "send_file",
-    "file": "repos/flask/src/flask/helpers.py",
-    "chunk_id": "5ec93b8b9e69",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": ".. versionchanged:: 1.0\n        UTF-8 filenames as specified in :rfc:`2231` are supported.\n\n    .. versionchanged:: 0.12\n        The filename is no longer automatically inferred from file\n        objects. If you want to use automatic MIME and etag support,\n        pass a filename via ``filename_or_fp`` or\n        ``attachment_filename``.\n\n    .. versionchanged:: 0.12\n        ``attachment_filename`` is preferred over ``filename`` for MIME\n        detection.\n\n    .. versionchanged:: 0.9\n        ``cache_timeout`` defaults to\n        :meth:`Flask.get_send_file_max_age`.\n\n    .. versionchanged:: 0.7\n        MIME guessing and etag support for file-like objects was\n        removed because it was unreliable. Pass a filename if you are\n        able to, otherwise attach an etag yourself.\n\n    .. versionchanged:: 0.5\n        The ``add_etags``, ``cache_timeout`` and ``conditional``\n        parameters were added. The default behavior is to add etags.\n\n    .. versionadded:: 0.2\n    \"\"\"\n    return werkzeug.utils.send_file(  # type: ignore[return-value]\n        **_prepare_send_file_kwargs(\n            path_or_file=path_or_file,\n            environ=request.environ,\n            mimetype=mimetype,\n            as_attachment=as_attachment,\n            download_name=download_name,\n            conditional=conditional,\n            etag=etag,\n            last_modified=last_modified,\n            max_age=max_age,\n        )\n    )",
-    "suggested_fix": "No automated patch available. Manual review required.",
-    "verification": {
-      "verified": null,
-      "baseline_pass": 0,
-      "baseline_fail": 0,
-      "after_pass": null,
-      "after_fail": null,
-      "confidence_boost": 0.0,
-      "reason": "No runnable pytest suite found \u2014 add tests to enable patch verification"
-    }
-  },
-  {
-    "function": "register",
-    "file": "repos/flask/src/flask/sansio/blueprints.py",
-    "chunk_id": "d7d76070dfad",
-    "issue_type": "dna_violation",
-    "severity": "low",
-    "patch_source": "none",
-    "original_code": "if bp_subdomain is None:\n                bp_subdomain = blueprint.subdomain\n\n            if state.subdomain is not None and bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain + \".\" + state.subdomain\n            elif bp_subdomain is not None:\n                bp_options[\"subdomain\"] = bp_subdomain\n            elif state.subdomain is not None:\n                bp_options[\"subdomain\"] = state.subdomain\n\n            if bp_url_prefix is None:\n                bp_url_prefix = blueprint.url_prefix\n\n            if state.url_prefix is not None and bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = (\n                    state.url_prefix.rstrip(\"/\") + \"/\" + bp_url_prefix.lstrip(\"/\")\n                )\n            elif bp_url_prefix is not None:\n                bp_options[\"url_prefix\"] = bp_url_prefix\n            elif state.url_prefix is not None:\n                bp_options[\"url_prefix\"] = state.url_prefix\n\n            bp_options[\"name_prefix\"] = name\n            blueprint.register(app, bp_options)",
-    "suggested_fix": "No automated patch available. Manual review required.",
+    "patch_source": "llamacpp",
+    "original_code": "# \u2500\u2500 Stage 13: Patch verification (novel) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    logger.info(\"[13/13] Verifying patches against test suite\")\n    try:\n        from analysis.patch_verifier import PatchVerifier\n        with _timed(\"patch verification\"):\n            verifier = PatchVerifier(repo_path)\n            for patch in patches:\n                result = verifier.verify(patch)\n                patch[\"verification\"] = result\n\n                # Log a one-line verdict per patch\n                status = (\"\u2705\" if result[\"verified\"] is True  else\n                          \"\u274c\" if result[\"verified\"] is False else \"\u26a0\ufe0f \")\n                logger.info(\n                    \"       %s  %-28s  %s\",\n                    status,\n                    patch.get(\"function\", \"\")[:28],\n                    result[\"reason\"][:50],\n                )\n    except Exception as exc:\n        logger.warning(\"Patch verification skipped (non-fatal): %s\", exc)\n\n    # \u2500\u2500 Evaluation report \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    report = BenchmarkReport(chunks, issues, patches)\n    report.print_report()\n\n    # \u2500\u2500 Save results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    rd = config.results_dir\n    _save_json(issues,            rd / \"issues.json\")\n    _save_json(patches,           rd / \"patches.json\")\n    _save_json(report.as_dict(),  rd / \"benchmark.json\")\n    _save_json(high_conf,         rd / \"issues_high_confidence.json\")\n\n    logger.info(sep)\n    logger.info(\"ANALYSIS COMPLETE\")\n    logger.info(sep)",
+    "suggested_fix": "```python\n# \u2500\u2500 Stage 13: Patch verification (novel) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nlogger.info(\"[13/13] Verifying patches against test suite\")\ntry:\n    from analysis.patch_verifier import PatchVerifier\n    with _timed(\"patch verification\"):\n        verifier = PatchVerifier(repo_path)\n        for patch in patches:\n            result = verifier.verify(patch)\n            patch[\"verification\"] = result\n\n            # Log a one-line verdict per patch\n            status = (\"\u2705\" if result[\"verified\"] is True  else\n                      \"\u274c\" if result[\"verified\"] is False else \"\u26a0\ufe0f \")\n            logger.info(\n                \"       %s  %-28s  %s\",\n                status,\n                patch.get(\"function\", \"\")[:28],\n                result[\"reason\"][:50],\n            )\nexcept Exception as exc:\n    logger.warning(\"Patch verification skipped (non-fatal): %s\", exc)\n\n# \u2500\u2500 Evaluation report \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nreport = BenchmarkReport(chunks, issues, patches)\nreport.print_report()\n\n# \u2500\u2500 Save results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nrd = config.results_dir\n_save_json(issues,            rd / \"issues.json\")\n_save_json(patches,           rd / \"patches.json\")\n_save_json(report.as_dict(),  rd / \"benchmark.json\")\n_save_json(high_conf,         rd / \"issues_high_confidence.json",
     "verification": {
       "verified": null,
       "baseline_pass": 0,

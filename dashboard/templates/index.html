@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Code Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:14px;line-height:1.5}
+.nav{background:#fff;border-bottom:1px solid #e4e4e7;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:#18181b}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-input{border:1px solid #e4e4e7;border-radius:6px;background:#fafafa;color:#18181b;font-family:'Inter',sans-serif;font-size:13px;padding:7px 12px;width:280px;outline:none;transition:border-color .15s}
+.nav-input:focus{border-color:#71717a}
+.nav-input::placeholder{color:#a1a1aa}
+.btn{background:#18181b;color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:7px 16px;cursor:pointer;transition:background .15s}
+.btn:hover{background:#27272a}
+.btn:disabled{background:#a1a1aa;cursor:not-allowed}
+.page{max-width:1200px;margin:0 auto;padding:28px 24px 48px}
+.page-header{margin-bottom:24px}
+.page-title{font-size:20px;font-weight:600;margin-bottom:4px}
+.page-sub{font-size:13px;color:#71717a}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:16px}
+.stat-label{font-size:12px;color:#71717a;font-weight:500;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:600;letter-spacing:-0.5px;line-height:1;margin-bottom:2px}
+.stat-sub{font-size:11px;color:#a1a1aa}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.mb{margin-bottom:12px}
+.card{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:600;color:#18181b}
+.badge{background:#f4f4f5;border:1px solid #e4e4e7;border-radius:20px;padding:2px 10px;font-size:11px;color:#71717a;font-weight:500}
+.ch{height:180px;position:relative}
+.ch-sm{height:130px;position:relative}
+.sev-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f4f4f5}
+.sev-item:last-child{border:none}
+.sev-name{width:58px;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
+.sev-track{flex:1;height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden}
+.sev-fill{height:100%;border-radius:2px}
+.sev-count{font-size:13px;font-weight:600;min-width:22px;text-align:right}
+.file-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4f4f5}
+.file-row:last-child{border:none}
+.file-name{font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#3b82f6}
+.file-right{display:flex;align-items:center;gap:8px}
+.mini-track{width:64px;height:3px;background:#f4f4f5;border-radius:2px}
+.mini-fill{height:100%;background:#3b82f6;border-radius:2px}
+.file-n{font-size:12px;font-weight:600;color:#71717a;min-width:16px;text-align:right}
+.dna-row{padding:10px 0;border-bottom:1px solid #f4f4f5}
+.dna-row:last-child{border:none}
+.dna-head{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.dna-name{font-weight:500;color:#3f3f46}
+.dna-pct{font-weight:600}
+.dna-track{height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden;margin-bottom:4px}
+.dna-fill{height:100%;border-radius:2px}
+.dna-dom{font-size:11px;color:#a1a1aa}
+.issues-list{max-height:360px;overflow-y:auto}
+.issues-list::-webkit-scrollbar{width:3px}
+.issues-list::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:2px}
+.issue-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f4f4f5}
+.issue-row:last-child{border:none}
+.issue-dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.issue-body{flex:1;min-width:0}
+.issue-type{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.4px;color:#71717a;margin-bottom:2px}
+.issue-fn{font-size:13px;font-weight:500;font-family:'SF Mono','Fira Code',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.issue-loc{font-size:11px;color:#a1a1aa;margin-top:2px}
+.conf-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.patches-list{max-height:360px;overflow-y:auto}
+.patches-list::-webkit-scrollbar{width:3px}
+.patches-list::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:2px}
+.patch-row{padding:10px 12px;background:#fafafa;border:1px solid #f4f4f5;border-radius:8px;margin-bottom:6px}
+.patch-row:last-child{margin:0}
+.patch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.patch-fn{font-family:'SF Mono','Fira Code',monospace;font-size:12px;font-weight:500}
+.source-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px}
+.llm-pill{background:#fef9c3;color:#854d0e}
+.rule-pill{background:#eff6ff;color:#1d4ed8}
+.patch-sub{font-size:11px;color:#a1a1aa}
+.verify-tag{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;font-weight:500}
+.log-area{display:none;background:#18181b;border-radius:8px;padding:14px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;height:180px;overflow-y:auto;margin-top:12px}
+.log-area.on{display:block}
+.ll{color:#52525b;margin-bottom:1px}
+.ll.i{color:#22c55e}
+.ll.w{color:#f59e0b}
+.ll.d{color:#60a5fa}
+.empty{text-align:center;padding:72px 40px;background:#fff;border:1px solid #e4e4e7;border-radius:10px}
+.empty h2{font-size:18px;font-weight:600;margin-bottom:8px}
+.empty p{color:#71717a;font-size:13px;line-height:1.7;margin-bottom:16px}
+.empty code{display:inline-block;background:#f4f4f5;border-radius:6px;padding:8px 16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#18181b}
+footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:center;font-size:12px;color:#a1a1aa}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-dot"></div>
+    AI Code Analyzer
+  </div>
+  <div class="nav-right">
+    <input class="nav-input" id="repoUrl" type="text" placeholder="https://github.com/owner/repo" />
+    <button class="btn" id="runBtn" onclick="startAnalysis()">Run</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="page-header">
+    <div class="page-title">Analysis Report</div>
+    <div class="page-sub">
+      {% if data.has_results %}
+        {{ data.total_issues }} issues detected
+      {% else %}
+        No analysis results yet
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not data.has_results %}
+  <div class="empty">
+    <h2>Run your first analysis</h2>
+    <p>Enter a GitHub repository URL above and click Run,<br>or run the pipeline from your terminal first.</p>
+    <code>python analyze_repo.py https://github.com/pallets/flask</code>
+  </div>
+
+  {% else %}
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total Issues</div>
+      <div class="stat-value">{{ data.total_issues }}</div>
+      <div class="stat-sub">all detectors</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">High Confidence</div>
+      <div class="stat-value" style="color:#ef4444">{{ data.high_confidence }}</div>
+      <div class="stat-sub">≥ 80% score</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Taint Flows</div>
+      <div class="stat-value" style="color:#3b82f6">{{ data.taint_count }}</div>
+      <div class="stat-sub">cross-function</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Anomalies</div>
+      <div class="stat-value" style="color:#8b5cf6">{{ data.anomaly_count }}</div>
+      <div class="stat-sub">statistical</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">DNA Violations</div>
+      <div class="stat-value" style="color:#f59e0b">{{ data.dna_count }}</div>
+      <div class="stat-sub">convention</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Patch Coverage</div>
+      <div class="stat-value" style="color:#22c55e">{{ data.coverage_pct }}%</div>
+      <div class="stat-sub">{{ data.total_patches }} patches</div>
+    </div>
+  </div>
+
+  <div class="g3">
+
+    <div class="card">
+      <div class="card-head"><div class="card-title">Severity Breakdown</div></div>
+      {% set tot = data.total_issues if data.total_issues > 0 else 1 %}
+      {% set sev_items = [
+        ('High',   '#ef4444', 'high'),
+        ('Medium', '#f59e0b', 'medium'),
+        ('Low',    '#22c55e', 'low')
+      ] %}
+      {% for label, color, key in sev_items %}
+      {% set n = data.severity.get(key, 0) %}
+      <div class="sev-item">
+        <div class="sev-name" style="color:{{ color }}">{{ label }}</div>
+        <div class="sev-track">
+          <div class="sev-fill" style="width:{{ ((n / tot) * 100) | int }}%;background:{{ color }}"></div>
+        </div>
+        <div class="sev-count" style="color:{{ color }}">{{ n }}</div>
+      </div>
+      {% endfor %}
+      <div class="ch-sm" style="margin-top:14px">
+        <canvas id="sevChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Issue Types</div>
+        <div class="badge">{{ data.issue_types | length }}</div>
+      </div>
+      <div class="ch"><canvas id="typeChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Top Files</div>
+        <div class="badge">by count</div>
+      </div>
+      {% set mx = data.top_files[0][1] if data.top_files else 1 %}
+      {% for fname, n in data.top_files %}
+      <div class="file-row">
+        <div class="file-name">{{ fname }}</div>
+        <div class="file-right">
+          <div class="mini-track">
+            <div class="mini-fill" style="width:{{ ((n / mx) * 100) | int }}%"></div>
+          </div>
+          <div class="file-n">{{ n }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <div class="g2">
+
+    <div class="card">
+      <div class="card-head"><div class="card-title">Confidence Distribution</div></div>
+      <div class="ch"><canvas id="confChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Codebase DNA</div>
+        <div class="badge">5 patterns</div>
+      </div>
+      {% set dna_rows = [
+        ('Output Style',    2,  'logging',           False),
+        ('Docstrings',      65, 'docstrings',         False),
+        ('Type Hints',      93, 'type annotations',   True),
+        ('Error Handling',  46, 'custom exceptions',  False),
+        ('Naming',          64, 'snake_case',          False)
+      ] %}
+      {% for label, pct, dom, ok in dna_rows %}
+      <div class="dna-row">
+        <div class="dna-head">
+          <span class="dna-name">{{ label }}</span>
+          <span class="dna-pct" style="color:{{ '#22c55e' if ok else '#f59e0b' }}">{{ pct }}%</span>
+        </div>
+        <div class="dna-track">
+          <div class="dna-fill" style="width:{{ pct }}%;background:{{ '#22c55e' if ok else '#f59e0b' }}"></div>
+        </div>
+        <div class="dna-dom">{{ dom }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <div class="g2">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Issues</div>
+        <div class="badge">{{ data.total_issues }} total</div>
+      </div>
+      <div class="issues-list">
+        {% for iss in data.recent_issues %}
+        {% set c   = iss.get('confidence', 0) %}
+        {% set s   = iss.get('severity', 'low') %}
+        {% set dc  = '#ef4444' if s == 'high' else '#f59e0b' if s == 'medium' else '#22c55e' %}
+        {% set bg  = '#dcfce7' if c >= 0.80 else '#fef9c3' if c >= 0.60 else '#fee2e2' %}
+        {% set tc  = '#15803d' if c >= 0.80 else '#92400e' if c >= 0.60 else '#b91c1c' %}
+        <div class="issue-row">
+          <div class="issue-dot" style="background:{{ dc }}"></div>
+          <div class="issue-body">
+            <div class="issue-type">{{ iss.get('type', '').replace('_', ' ') }}</div>
+            <div class="issue-fn">{{ iss.get('function', '') }}()</div>
+            <div class="issue-loc">{{ iss.get('file', '').split('/')[-1] }} · line {{ iss.get('line_number', '?') }}</div>
+          </div>
+          <div class="conf-pill" style="background:{{ bg }};color:{{ tc }}">
+            {{ (c * 100) | int }}%
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Patches</div>
+        <div class="badge">{{ data.total_patches }} generated</div>
+      </div>
+      <div class="patches-list">
+        {% for p in data.patches %}
+        {% set src    = p.get('patch_source', '') %}
+        {% set is_llm = ('llm' in src) or ('llamacpp' in src) %}
+        <div class="patch-row">
+          <div class="patch-head">
+            <div class="patch-fn">{{ p.get('function', '') }}()</div>
+            <div class="source-pill {{ 'llm-pill' if is_llm else 'rule-pill' }}">
+              {{ 'LLM' if is_llm else 'Rule' }}
+            </div>
+          </div>
+          <div class="patch-sub">
+            {{ p.get('issue_type', '').replace('_', ' ') }} ·
+            {{ p.get('file', '').split('/')[-1] }}
+          </div>
+          {% if p.get('verification') %}
+          {% set v  = p['verification'] %}
+          {% set vc = '#15803d' if v.get('verified') == True else '#b91c1c' if v.get('verified') == False else '#71717a' %}
+          {% set vt = '✓ verified' if v.get('verified') == True else '✗ rejected' if v.get('verified') == False else '— unverified' %}
+          <div class="verify-tag" style="color:{{ vc }}">{{ vt }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="log-area" id="logBox"></div>
+
+  {% endif %}
+
+  <footer>
+    AI Code Analyzer &nbsp;·&nbsp; FastAPI &nbsp;·&nbsp;
+    llama.cpp (Qwen 14B) &nbsp;·&nbsp; sentence-transformers &nbsp;·&nbsp; scikit-learn
+  </footer>
+
+</div>
+
+<script>
+{% if data.has_results %}
+
+Chart.defaults.color = '#71717a';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+// Severity donut
+new Chart(document.getElementById('sevChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['High', 'Medium', 'Low'],
+    datasets: [{
+      data: [
+        {{ data.severity.get('high', 0) }},
+        {{ data.severity.get('medium', 0) }},
+        {{ data.severity.get('low', 0) }}
+      ],
+      backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
+      borderWidth: 2,
+      borderColor: '#fff',
+      hoverOffset: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 9, padding: 12 } }
+    }
+  }
+});
+
+// Issue types horizontal bar
+const typeLabels = [];
+const typeValues = [];
+{% for k, v in data.issue_types.items() %}
+typeLabels.push('{{ k.replace("_", " ") }}');
+typeValues.push({{ v }});
+{% endfor %}
+
+new Chart(document.getElementById('typeChart'), {
+  type: 'bar',
+  data: {
+    labels: typeLabels,
+    datasets: [{
+      data: typeValues,
+      backgroundColor: '#3b82f6',
+      borderRadius: 4,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } },
+      y: { grid: { display: false }, ticks: { color: '#52525b' } }
+    }
+  }
+});
+
+// Confidence bar
+const confLabels = [];
+const confValues = [];
+{% for k, v in data.conf_buckets.items() %}
+confLabels.push('{{ k }}');
+confValues.push({{ v }});
+{% endfor %}
+
+new Chart(document.getElementById('confChart'), {
+  type: 'bar',
+  data: {
+    labels: confLabels,
+    datasets: [{
+      data: confValues,
+      backgroundColor: ['#22c55e', '#86efac', '#f59e0b', '#ef4444'],
+      borderRadius: 5,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#a1a1aa' } },
+      y: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } }
+    }
+  }
+});
+
+{% endif %}
+
+let poll;
+
+async function startAnalysis() {
+  const url = document.getElementById('repoUrl').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+  document.getElementById('logBox').classList.add('on');
+  const r = await fetch('/api/analyze?repo_url=' + encodeURIComponent(url), { method: 'POST' });
+  const d = await r.json();
+  if (d.status === 'started') {
+    poll = setInterval(checkStatus, 1500);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Run';
+  }
+}
+
+async function checkStatus() {
+  const r = await fetch('/api/status');
+  const d = await r.json();
+  const box = document.getElementById('logBox');
+  box.innerHTML = d.log.map(l => {
+    const cls = l.includes('INFO') ? 'i' : l.includes('WARNING') ? 'w' : l.includes('complete') ? 'd' : '';
+    return `<div class="ll ${cls}">${l}</div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+  if (!d.running) {
+    clearInterval(poll);
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runBtn').textContent = 'Run';
+    setTimeout(() => location.reload(), 1500);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,49 +1,47 @@
 {
   "summary": {
-    "total_chunks": 356,
-    "total_issues": 65,
-    "detection_rate_per_100": 18.26
+    "total_chunks": 134,
+    "total_issues": 46,
+    "detection_rate_per_100": 34.33
   },
   "severity_breakdown": {
-    "low": 29,
-    "medium": 20,
-    "high": 16
+    "high": 4,
+    "low": 35,
+    "medium": 7
   },
   "type_breakdown": {
-    "assert_in_production": 4,
-    "eval_usage": 1,
-    "bare_except_swallow": 3,
-    "exec_usage": 1,
-    "statistical_anomaly": 18,
-    "dna_violation": 25,
-    "taint_flow": 13
+    "division_by_zero": 1,
+    "print_in_production": 32,
+    "statistical_anomaly": 7,
+    "dna_violation": 3,
+    "taint_flow": 3
   },
   "patch_metrics": {
-    "patched_issues": 9,
-    "coverage_pct": 13.8,
-    "llm_count": 0,
-    "rule_count": 9
+    "patched_issues": 11,
+    "coverage_pct": 23.9,
+    "llm_count": 10,
+    "rule_count": 1
   },
   "top_files": [
     [
-      "repos/flask/examples/tutorial/flaskr/auth.py",
-      8
+      "repos/AI-Code-Analyzer/evaluation/benchmark.py",
+      23
     ],
     [
-      "repos/flask/examples/tutorial/flaskr/blog.py",
-      8
+      "repos/AI-Code-Analyzer/analyze_repo.py",
+      11
     ],
     [
-      "repos/flask/examples/tutorial/flaskr/db.py",
-      7
+      "repos/AI-Code-Analyzer/analysis/patch_verifier.py",
+      3
     ],
     [
-      "repos/flask/src/flask/app.py",
-      6
+      "repos/AI-Code-Analyzer/parsing/extract_functions.py",
+      2
     ],
     [
-      "repos/flask/src/flask/cli.py",
-      6
+      "repos/AI-Code-Analyzer/analysis/git_archaeologist.py",
+      2
     ]
   ]
 }
