@@ -3,106 +3,326 @@
 """
 Module: generate_patch
 
-Strategy (priority order)
---------------------------
-1. LLM patch   — calls whichever provider is set in config.llm_provider
-2. Rule patch  — curated template for the issue type
-3. No patch    — structured fallback if neither applies
+Responsibility
+--------------
+Generate fix suggestions for every detected issue.
 
-Supported providers: llamacpp | anthropic | ollama | groq
+Strategy — tried in this order for every issue:
+    1. RAG + LLM    Retrieve similar code for style context,
+                    build a constrained prompt, call LLM,
+                    validate output is real Python code.
+    2. LLM only     Same but without RAG context.
+    3. Rule-based   Curated template — always available,
+                    always correct.
+    4. No patch     Structured fallback.
+
+How hallucination is stopped
+-----------------------------
+Layer 1 — Issue type filtering
+    taint_flow, statistical_anomaly, dna_violation and
+    semantic_similarity_flag go directly to rule-based.
+    The LLM only sees ONE function but these issues span
+    MULTIPLE functions — it cannot reason about them and
+    will invent fake fixes. Rule-based templates are more
+    accurate for these types.
+
+Layer 2 — Constrained prompt
+    The prompt gives the LLM a strict output contract:
+    - Must start with "# fix:"
+    - Must return the complete function
+    - No markdown, no explanation
+    - Temperature 0.0 — deterministic, no creativity
+
+Layer 3 — Output cleaning
+    _clean_llm_output() strips markdown code fences.
+    Qwen ignores "no markdown" instructions ~30% of the
+    time. Stripping fences is more reliable than asking.
+
+Layer 4 — Output validation
+    _is_valid_python() checks the cleaned output is
+    actual Python code — not advice, not explanations.
+    Rejects responses starting with natural language.
+    Falls back to rule-based if validation fails.
+
+Design decisions
+----------------
+- Temperature is set to 0.0 for patch generation.
+  Patch generation is a precision task not a creative one.
+  Temperature 0 means the model always picks the most
+  likely token — deterministic and less likely to invent.
+
+- _TEMPLATE_ISSUES is a frozenset at class level.
+  Checked before any LLM call — no wasted network I/O.
+
+- _build_patch is the single schema for all outputs.
+  LLM and rule-based patches are structurally identical
+  so downstream consumers don't need to handle both.
+
+- max_workers=2 in ThreadPoolExecutor.
+  llama.cpp handles 4 parallel slots but degrades under
+  heavy concurrent load. 2 workers gives enough
+  parallelism without overwhelming the server.
 """
 
+import ast
 import json
 import logging
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional
 
 from config import DEFAULT_CONFIG, PipelineConfig
-from exceptions import LLMError
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------
-# Prompt builder (shared across all providers)
+# Layer 1 — issue types that skip LLM entirely
+# ------------------------------------------------------------------
+
+# These issue types go directly to rule-based patches.
+# The LLM cannot fix them correctly because:
+#
+#   taint_flow          — spans multiple functions, LLM only sees one
+#   statistical_anomaly — no clear "fix", needs human judgement
+#   dna_violation       — convention fix, not a bug fix
+#   semantic_similarity — pattern match, template is more accurate
+#
+_SKIP_LLM: frozenset = frozenset({
+    "taint_flow",
+    "statistical_anomaly",
+    "dna_violation",
+    "semantic_similarity_flag",
+})
+
+
+# ------------------------------------------------------------------
+# Layer 2 — constrained prompt
 # ------------------------------------------------------------------
 
 def _build_prompt(issue: Dict[str, Any], chunk: Dict[str, Any]) -> str:
+    """
+    Build a tightly constrained prompt that minimises hallucination.
+
+    Key constraints:
+    - Strict output format enforced ("start with # fix:")
+    - "Do not invent" instruction — stops fictional imports
+    - "Only fix the specific issue" — stops scope creep
+    - No markdown instruction repeated twice for emphasis
+    """
     return (
-        f"You are a senior Python engineer doing a code review.\n\n"
-        f"A static analyzer detected the following issue:\n"
-        f"  Type    : {issue['type']}\n"
-        f"  Severity: {issue['severity']}\n"
-        f"  Message : {issue['message']}\n\n"
-        f"Affected code:\n"
-        f"```python\n{chunk['code']}\n```\n\n"
-        f"Instructions:\n"
-        f"- Provide the corrected version of the code above.\n"
-        f"- Add a single comment line above the fix explaining what changed.\n"
-        f"- Do not restate the problem.\n"
-        f"- Output only the fixed code. No markdown, no explanation.\n"
+        f"Fix this Python function. Follow the output format exactly.\n\n"
+        f"ISSUE TYPE : {issue['type']}\n"
+        f"SEVERITY   : {issue['severity']}\n"
+        f"PROBLEM    : {issue['message']}\n"
+        f"FUNCTION   : {chunk.get('function_name', '')}\n\n"
+        f"CODE TO FIX:\n"
+        f"{chunk['code']}\n\n"
+        f"OUTPUT FORMAT — follow this exactly:\n"
+        f"# fix: <one line describing the change>\n"
+        f"<complete corrected function here>\n\n"
+        f"RULES:\n"
+        f"- Start your response with '# fix:' on line 1\n"
+        f"- Return the complete corrected function\n"
+        f"- Only fix the specific issue described above\n"
+        f"- Do not add imports that are not needed\n"
+        f"- Do not invent functionality that does not exist\n"
+        f"- Do not use markdown code fences\n"
+        f"- No explanation after the code\n"
     )
 
 
 # ------------------------------------------------------------------
-# Provider: llama.cpp (local, free, no API key)
+# Layer 3 — output cleaning
+# ------------------------------------------------------------------
+
+def _clean_llm_output(text: str) -> str:
+    """
+    Strip markdown code fences from LLM output.
+
+    Qwen ignores "no markdown" instructions roughly 30% of
+    the time regardless of how the prompt is phrased. Cleaning
+    the output is more reliable than prompt engineering alone.
+
+    Handles:
+        ```python ... ```
+        ``` ... ```
+        ` ... `
+
+    Preserves content inside the fences — only removes the fences.
+    """
+    if not text:
+        return text
+
+    text = text.strip()
+
+    lines   = text.splitlines()
+    cleaned = []
+    inside  = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Opening fence — start collecting content, skip the fence line
+        if stripped.startswith("```"):
+            inside = True
+            continue
+
+        # If we were inside a fence and hit another ``` — close it
+        if inside and stripped == "```":
+            inside = False
+            continue
+
+        cleaned.append(line)
+
+    result = "\n".join(cleaned).strip()
+
+    # If nothing was inside a fence, return original stripped
+    return result if result else text
+
+
+# ------------------------------------------------------------------
+# Layer 4 — output validation
+# ------------------------------------------------------------------
+
+def _is_valid_python(text: str) -> bool:
+    """
+    Confirm the LLM returned actual Python code, not advice.
+
+    Two checks:
+    1. Does not start with natural language
+       (catches "Replace eval with...", "You should use...")
+    2. Parses as valid Python AST
+       (catches truncated responses, structural errors)
+
+    Returns True only if both checks pass.
+    """
+    if not text or len(text.strip()) < 10:
+        return False
+
+    # Check 1 — first line must look like code, not advice
+    first_line = text.strip().splitlines()[0].lower().strip()
+
+    natural_language_starters = (
+        "replace ",
+        "use ",
+        "consider ",
+        "you should",
+        "you can ",
+        "to fix",
+        "the fix",
+        "this function",
+        "instead of",
+        "avoid ",
+        "here is",
+        "here's",
+        "i recommend",
+        "we can",
+        "one way",
+        "a better",
+        "the issue",
+        "the problem",
+    )
+
+    if any(first_line.startswith(s) for s in natural_language_starters):
+        logger.debug("LLM response rejected — starts with advice not code")
+        return False
+
+    # Check 2 — must parse as valid Python
+    # Wrap in a class/module context because the LLM sometimes
+    # returns just the function body without the def line
+    try:
+        ast.parse(text)
+        return True
+    except SyntaxError:
+        # Try wrapping in a dummy class in case it is a method
+        try:
+            ast.parse(f"class _Dummy:\n" + "\n".join(
+                "    " + line for line in text.splitlines()
+            ))
+            return True
+        except SyntaxError:
+            logger.debug("LLM response rejected — failed ast.parse()")
+            return False
+
+
+# ------------------------------------------------------------------
+# Synthetic chunk builder
+# ------------------------------------------------------------------
+
+def _synthetic_chunk(issue: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Build a minimal chunk for issues with no embedded chunk.
+
+    Taint flows have no chunk_id that maps into the embedded
+    chunk list because they span multiple functions. This
+    synthetic chunk lets the patch generator produce a rule-based
+    suggestion for them.
+    """
+    return {
+        "chunk_id":      issue.get("chunk_id", "synthetic"),
+        "function_name": issue.get("function", "unknown"),
+        "file_path":     issue.get("file", "unknown"),
+        "code":          issue.get("code_snippet", "# taint flow spans multiple functions"),
+        "start_line":    issue.get("line_number", 0),
+        "embedding":     None,
+    }
+
+
+# ------------------------------------------------------------------
+# LLM provider functions
 # ------------------------------------------------------------------
 
 def _call_llamacpp(
     issue:  Dict[str, Any],
     chunk:  Dict[str, Any],
     config: PipelineConfig,
+    prompt: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Call a locally running llama.cpp server.
+    Call the local llama.cpp server.
 
-    llama.cpp exposes an OpenAI-compatible /v1/chat/completions endpoint.
-
-    Start the server first:
-        ./build/bin/llama-server --model models/qwen2.5-coder-14b-q4.gguf --port 8080
+    Temperature is forced to 0.0 regardless of config.
+    Patch generation is a precision task — creativity
+    causes hallucination. Deterministic output is better.
     """
-
     payload = json.dumps({
         "model": config.llamacpp_model,
         "messages": [
             {
                 "role": "system",
                 "content": (
-                    "You are a senior Python engineer. "
-                    "When given buggy code and an issue description, "
-                    "return ONLY the corrected Python code with a single "
-                    "comment explaining what was changed. "
-                    "No explanations. No markdown. Just fixed code."
-                )
+                    "You are a Python code repair tool. "
+                    "When given a buggy function, return ONLY the "
+                    "corrected function starting with '# fix:' on "
+                    "line 1. No markdown. No explanation. Just code."
+                ),
             },
             {
                 "role": "user",
-                "content": _build_prompt(issue, chunk)
-            }
+                "content": prompt or _build_prompt(issue, chunk),
+            },
         ],
-        "temperature": config.llamacpp_temperature,
+        "temperature": 0.0,          # deterministic — prevents creativity
         "max_tokens":  config.llamacpp_max_tokens,
         "stream":      False,
     }).encode("utf-8")
 
-    request = urllib.request.Request(
+    req = urllib.request.Request(
         url=config.llamacpp_url,
         data=payload,
         headers={"content-type": "application/json"},
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=config.llamacpp_timeout) as resp:
+        with urllib.request.urlopen(req, timeout=config.llamacpp_timeout) as resp:
             data = json.loads(resp.read())
             return data["choices"][0]["message"]["content"].strip()
 
     except urllib.error.URLError:
         logger.warning(
-            "llama.cpp server not reachable at %s — "
-            "is the server running? "
-            "Start it with: ./build/bin/llama-server --model models/qwen2.5-coder-14b-q4.gguf --port 8080",
+            "llama.cpp not reachable at %s — is the server running?",
             config.llamacpp_url,
         )
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
@@ -111,15 +331,13 @@ def _call_llamacpp(
     return None
 
 
-# ------------------------------------------------------------------
-# Provider: Anthropic Claude
-# ------------------------------------------------------------------
-
 def _call_anthropic(
     issue:  Dict[str, Any],
     chunk:  Dict[str, Any],
     config: PipelineConfig,
+    prompt: Optional[str] = None,
 ) -> Optional[str]:
+    """Call the Anthropic Claude API."""
 
     if not config.api_key:
         logger.debug("ANTHROPIC_API_KEY not set — skipping")
@@ -128,10 +346,13 @@ def _call_anthropic(
     payload = json.dumps({
         "model":      config.llm_model,
         "max_tokens": config.llm_max_tokens,
-        "messages":   [{"role": "user", "content": _build_prompt(issue, chunk)}],
+        "messages":   [{
+            "role":    "user",
+            "content": prompt or _build_prompt(issue, chunk),
+        }],
     }).encode("utf-8")
 
-    request = urllib.request.Request(
+    req = urllib.request.Request(
         url=config.anthropic_api_url,
         data=payload,
         headers={
@@ -142,29 +363,27 @@ def _call_anthropic(
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=config.llm_timeout) as resp:
+        with urllib.request.urlopen(req, timeout=config.llm_timeout) as resp:
             data = json.loads(resp.read())
             return data["content"][0]["text"]
 
     except urllib.error.HTTPError as exc:
-        logger.warning("Anthropic API HTTP error %d", exc.code)
+        logger.warning("Anthropic HTTP error %d", exc.code)
     except urllib.error.URLError as exc:
-        logger.warning("Anthropic API network error: %s", exc.reason)
+        logger.warning("Anthropic network error: %s", exc.reason)
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
         logger.warning("Unexpected Anthropic response: %s", exc)
 
     return None
 
 
-# ------------------------------------------------------------------
-# Provider: Groq (free cloud API)
-# ------------------------------------------------------------------
-
 def _call_groq(
     issue:  Dict[str, Any],
     chunk:  Dict[str, Any],
     config: PipelineConfig,
+    prompt: Optional[str] = None,
 ) -> Optional[str]:
+    """Call the Groq cloud API."""
 
     if not config.groq_api_key:
         logger.debug("GROQ_API_KEY not set — skipping")
@@ -172,12 +391,15 @@ def _call_groq(
 
     payload = json.dumps({
         "model":       config.groq_model,
-        "messages":    [{"role": "user", "content": _build_prompt(issue, chunk)}],
+        "messages":    [{
+            "role":    "user",
+            "content": prompt or _build_prompt(issue, chunk),
+        }],
         "max_tokens":  config.llm_max_tokens,
-        "temperature": 0.1,
+        "temperature": 0.0,
     }).encode("utf-8")
 
-    request = urllib.request.Request(
+    req = urllib.request.Request(
         url=config.groq_api_url,
         data=payload,
         headers={
@@ -187,42 +409,41 @@ def _call_groq(
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=config.llm_timeout) as resp:
+        with urllib.request.urlopen(req, timeout=config.llm_timeout) as resp:
             data = json.loads(resp.read())
             return data["choices"][0]["message"]["content"].strip()
 
     except urllib.error.HTTPError as exc:
-        logger.warning("Groq API HTTP error %d", exc.code)
+        logger.warning("Groq HTTP error %d", exc.code)
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
         logger.warning("Unexpected Groq response: %s", exc)
 
     return None
 
 
-# ------------------------------------------------------------------
-# Provider: Ollama
-# ------------------------------------------------------------------
-
 def _call_ollama(
     issue:  Dict[str, Any],
     chunk:  Dict[str, Any],
     config: PipelineConfig,
+    prompt: Optional[str] = None,
 ) -> Optional[str]:
+    """Call a locally running Ollama server."""
 
     payload = json.dumps({
         "model":  config.ollama_model,
-        "prompt": _build_prompt(issue, chunk),
+        "prompt": prompt or _build_prompt(issue, chunk),
         "stream": False,
+        "options": {"temperature": 0.0},
     }).encode("utf-8")
 
-    request = urllib.request.Request(
+    req = urllib.request.Request(
         url=config.ollama_url,
         data=payload,
         headers={"content-type": "application/json"},
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=config.llamacpp_timeout) as resp:
+        with urllib.request.urlopen(req, timeout=config.llamacpp_timeout) as resp:
             data = json.loads(resp.read())
             return data.get("response", "").strip()
 
@@ -235,18 +456,16 @@ def _call_ollama(
 
 
 # ------------------------------------------------------------------
-# Router — picks provider from config
+# LLM router
 # ------------------------------------------------------------------
 
 def _call_llm(
     issue:  Dict[str, Any],
     chunk:  Dict[str, Any],
     config: PipelineConfig,
+    prompt: Optional[str] = None,
 ) -> Optional[str]:
-    """
-    Route to the correct LLM provider.
-    Change config.llm_provider to switch — no other code needs to change.
-    """
+    """Route to the correct LLM provider."""
 
     routes: Dict[str, Callable] = {
         "llamacpp":  _call_llamacpp,
@@ -256,12 +475,11 @@ def _call_llm(
     }
 
     handler = routes.get(config.llm_provider)
-
     if handler is None:
         logger.warning("Unknown LLM provider: '%s'", config.llm_provider)
         return None
 
-    return handler(issue, chunk, config)
+    return handler(issue, chunk, config, prompt)
 
 
 # ------------------------------------------------------------------
@@ -270,12 +488,25 @@ def _call_llm(
 
 class PatchGenerator:
     """
-    Generates fix suggestions for detected issues.
-    Tries LLM first, falls back to rule-based templates.
+    Generates fix suggestions for all detected issues.
+
+    Hallucination is stopped through 4 layers:
+        1. Skip LLM for issue types it cannot reason about
+        2. Constrained prompt with strict output format
+        3. Clean markdown fences from output
+        4. Validate output is real Python before accepting
+
+    RAGEngine is optional — when provided, LLM prompts include
+    semantically similar code from the same repo for style context.
     """
 
-    def __init__(self, config: PipelineConfig = DEFAULT_CONFIG):
+    def __init__(
+        self,
+        config:     PipelineConfig = DEFAULT_CONFIG,
+        rag_engine: Any            = None,
+    ):
         self._config = config
+        self._rag    = rag_engine
 
         self._patch_rules: Dict[str, Callable] = {
             "division_by_zero":         self._patch_division_by_zero,
@@ -287,6 +518,10 @@ class PatchGenerator:
             "mutable_default_argument": self._patch_mutable_default_arg,
             "hardcoded_secret":         self._patch_hardcoded_secret,
             "semantic_similarity_flag": self._patch_semantic_flag,
+            "taint_flow":               self._patch_taint_flow,
+            "statistical_anomaly":      self._patch_statistical_anomaly,
+            "dna_violation":            self._patch_dna_violation,
+            "print_in_production":      self._patch_print_in_production,
         }
 
     # ------------------------------------------------------------------
@@ -298,101 +533,136 @@ class PatchGenerator:
         issue: Dict[str, Any],
         chunk: Dict[str, Any],
     ) -> Dict[str, Any]:
+        """
+        Generate a fix for one issue.
 
-        # Strategy 1: LLM
-        llm_text = _call_llm(issue, chunk, self._config)
-        if llm_text:
-            logger.info(
-                "LLM patch (%s) generated for '%s' in %s",
-                self._config.llm_provider, issue["type"], chunk["file_path"],
-            )
-            return self._build_patch(issue, chunk, llm_text, source=self._config.llm_provider)
+        Order: Rule-only check → RAG+LLM → LLM → Rule → No patch
+        """
 
-        # Strategy 2: Rule-based
+        # Layer 1 — skip LLM for types it cannot handle
+        if issue.get("type") in _SKIP_LLM:
+            rule_handler = self._patch_rules.get(issue["type"])
+            if rule_handler:
+                return rule_handler(issue, chunk)
+            return self._build_no_patch(issue, chunk)
+
+        # Build prompt — RAG-augmented if engine is available
+        prompt  = None
+        rag_hit = False
+
+        if (self._rag
+                and self._rag.is_available
+                and chunk.get("embedding") is not None):
+            try:
+                similar = self._rag.retrieve_similar(chunk, top_k=3)
+                if similar:
+                    prompt  = self._rag.build_rag_prompt(issue, chunk, similar)
+                    rag_hit = True
+            except Exception as exc:
+                logger.debug("RAG prompt failed: %s", exc)
+
+        if prompt is None:
+            prompt = _build_prompt(issue, chunk)
+
+        # Layer 2+3+4 — call LLM, clean, validate
+        raw = _call_llm(issue, chunk, self._config, prompt)
+
+        if raw:
+            cleaned = _clean_llm_output(raw)
+
+            if _is_valid_python(cleaned):
+                source = (
+                    f"{self._config.llm_provider}+rag"
+                    if rag_hit else
+                    self._config.llm_provider
+                )
+                logger.info(
+                    "LLM patch accepted (%s) for '%s' in %s",
+                    source, issue["type"],
+                    chunk.get("file_path", "").split("/")[-1],
+                )
+                return self._build_patch(issue, chunk, cleaned, source=source)
+
+            else:
+                logger.info(
+                    "LLM response rejected for '%s' in %s — "
+                    "not valid Python, using rule-based fallback",
+                    issue["type"],
+                    chunk.get("file_path", "").split("/")[-1],
+                )
+
+        # Fall through to rule-based
         rule_handler = self._patch_rules.get(issue["type"])
         if rule_handler:
-            logger.debug("Rule-based patch used for '%s'", issue["type"])
             return rule_handler(issue, chunk)
 
-        # Strategy 3: No patch
-        return {
-            "function":      chunk["function_name"],
-            "file":          chunk["file_path"],
-            "chunk_id":      chunk["chunk_id"],
-            "issue_type":    issue["type"],
-            "severity":      issue["severity"],
-            "patch_source":  "none",
-            "original_code": chunk["code"],
-            "suggested_fix": "No automated patch available. Manual review required.",
-        }
+        return self._build_no_patch(issue, chunk)
 
     def generate_patches(
         self,
         issues: List[Dict[str, Any]],
         chunks: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """
-        Generate patches concurrently — 3 at a time instead of 1.
-
-        llama.cpp server handles parallel requests fine.
-        ThreadPoolExecutor is used (not ProcessPool) because
-        the bottleneck is network I/O waiting for LLM response,
-        not CPU — threads release the GIL during I/O waits.
-        """
-
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+        """Generate patches for all issues concurrently."""
 
         chunk_map = {c["chunk_id"]: c for c in chunks}
         patches   = []
         failed    = 0
 
-        # Build work list first — skip missing chunks early
-        work = []
+        work: List[tuple] = []
         for issue in issues:
             chunk = chunk_map.get(issue["chunk_id"])
             if chunk is None:
-                logger.warning("Chunk not found for issue: %s", issue["chunk_id"])
-                continue
+                if issue.get("type") == "taint_flow":
+                    chunk = _synthetic_chunk(issue)
+                else:
+                    logger.warning(
+                        "Chunk not found for %s — skipping",
+                        issue["chunk_id"],
+                    )
+                    continue
             work.append((issue, chunk))
 
-        # Run 3 patches in parallel
-        # Keep at 3 — higher values can overwhelm llama.cpp server
-        with ThreadPoolExecutor(max_workers=3) as executor:
-
-            future_to_issue = {
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_map = {
                 executor.submit(self.generate_patch, issue, chunk): issue
                 for issue, chunk in work
             }
 
-            for future in as_completed(future_to_issue):
-                issue = future_to_issue[future]
+            for future in as_completed(future_map):
+                issue = future_map[future]
                 try:
                     patch = future.result()
                     patches.append(patch)
                     logger.info(
                         "Patch done: %s in %s",
-                        issue["type"], issue["file"].split("/")[-1],
+                        issue["type"],
+                        issue.get("file", "").split("/")[-1],
                     )
                 except Exception as exc:
                     failed += 1
                     logger.warning(
-                        "Patch failed for %s in %s: %s",
-                        issue["type"], issue.get("file", "unknown"), exc,
+                        "Patch failed for %s: %s",
+                        issue.get("type", "unknown"), exc,
                     )
 
-        llm_count  = sum(1 for p in patches if p.get("patch_source") not in ("rule_based", "none"))
-        rule_count = sum(1 for p in patches if p.get("patch_source") == "rule_based")
+        # Summary log
+        rag_n  = sum(1 for p in patches if "+rag" in p.get("patch_source", ""))
+        llm_n  = sum(1 for p in patches
+                     if p.get("patch_source") not in ("rule_based", "none")
+                     and "+rag" not in p.get("patch_source", ""))
+        rule_n = sum(1 for p in patches if p.get("patch_source") == "rule_based")
 
         logger.info(
-            "Patches generated: %d LLM(%s), %d rule-based, %d total, %d failed",
-            llm_count, self._config.llm_provider,
-            rule_count, len(patches), failed,
+            "Patches: %d RAG+LLM  %d LLM  %d rule-based  "
+            "%d total  %d failed",
+            rag_n, llm_n, rule_n, len(patches), failed,
         )
 
         return patches
 
     # ------------------------------------------------------------------
-    # Output builder
+    # Output builders
     # ------------------------------------------------------------------
 
     def _build_patch(
@@ -413,65 +683,82 @@ class PatchGenerator:
             "suggested_fix": suggestion,
         }
 
+    def _build_no_patch(
+        self,
+        issue: Dict[str, Any],
+        chunk: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        return {
+            "function":      chunk.get("function_name", "unknown"),
+            "file":          chunk.get("file_path", "unknown"),
+            "chunk_id":      chunk.get("chunk_id", "unknown"),
+            "issue_type":    issue["type"],
+            "severity":      issue["severity"],
+            "patch_source":  "none",
+            "original_code": chunk.get("code", ""),
+            "suggested_fix": (
+                f"No automated patch for '{issue['type']}'. "
+                f"Manual review required."
+            ),
+        }
+
     # ------------------------------------------------------------------
-    # Rule-based fallbacks
+    # Rule-based patches
     # ------------------------------------------------------------------
 
     def _patch_division_by_zero(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Guard the division with a non-zero check:\n\n"
-            "  if denominator != 0:\n"
-            "      result = numerator / denominator\n"
-            "  else:\n"
-            "      raise ValueError(f'denominator must be non-zero, got {denominator}')"
+            "Guard the division with a zero check:\n\n"
+            "  if denominator == 0:\n"
+            "      raise ValueError('denominator cannot be zero')\n"
+            "  result = numerator / denominator"
         ), "rule_based")
 
     def _patch_eval_usage(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Replace eval() with ast.literal_eval() for safe value parsing:\n\n"
+            "Replace eval() with ast.literal_eval():\n\n"
             "  import ast\n"
             "  result = ast.literal_eval(expression)\n\n"
-            "If you need expression evaluation, use the `simpleeval` library."
+            "ast.literal_eval() only evaluates literals — "
+            "it cannot execute arbitrary code."
         ), "rule_based")
 
     def _patch_exec_usage(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Refactor dynamic execution into explicit callable functions:\n\n"
-            "  # Instead of: exec(dynamic_code)\n"
+            "Replace exec() with explicit importlib:\n\n"
             "  import importlib\n"
-            "  module = importlib.import_module('my.module')\n"
-            "  module.run()"
+            "  module = importlib.import_module('your.module')\n"
+            "  module.your_function()"
         ), "rule_based")
 
     def _patch_infinite_loop(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Add a clear termination condition:\n\n"
+            "Add a termination condition:\n\n"
             "  MAX_ITERATIONS = 10_000\n"
             "  for _ in range(MAX_ITERATIONS):\n"
-            "      if done_condition:\n"
+            "      if done:\n"
             "          break\n"
             "  else:\n"
-            "      raise RuntimeError('Loop exceeded maximum iterations')"
+            "      raise RuntimeError('Exceeded maximum iterations')"
         ), "rule_based")
 
     def _patch_assert_in_production(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Replace assert with an explicit guard:\n\n"
-            "  # Instead of: assert condition, 'message'\n"
+            "Replace assert with explicit validation:\n\n"
             "  if not condition:\n"
-            "      raise ValueError('message')\n\n"
-            "assert is stripped when Python runs with -O flag."
+            "      raise ValueError('descriptive message')\n\n"
+            "assert is removed when Python runs with -O flag."
         ), "rule_based")
 
     def _patch_bare_except(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Catch specific exceptions and log them:\n\n"
+            "Catch a specific exception and log it:\n\n"
             "  import logging\n"
             "  logger = logging.getLogger(__name__)\n\n"
             "  try:\n"
             "      ...\n"
-            "  except SomeSpecificError as exc:\n"
-            "      logger.exception('Error in <context>: %s', exc)\n"
+            "  except SpecificError as exc:\n"
+            "      logger.exception('Context: %s', exc)\n"
             "      raise"
         ), "rule_based")
 
@@ -486,16 +773,104 @@ class PatchGenerator:
 
     def _patch_hardcoded_secret(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            "Load credentials from environment variables:\n\n"
+            "Load from environment variables:\n\n"
             "  import os\n"
-            "  password = os.environ['DB_PASSWORD']\n\n"
-            "Add .env to .gitignore. Never commit secrets to source control."
+            "  secret = os.environ['SECRET_KEY']\n\n"
+            "Add .env to .gitignore. "
+            "If this secret was committed, rotate it immediately."
         ), "rule_based")
 
     def _patch_semantic_flag(self, issue: Dict, chunk: Dict) -> Dict:
         return self._build_patch(issue, chunk, (
-            f"Flagged as similar to known anti-pattern: "
+            f"Flagged as similar to anti-pattern "
             f"'{issue.get('pattern_label', 'unknown')}' "
-            f"(score: {issue.get('similarity_score', 'N/A')}). "
-            f"Manual review recommended."
+            f"(score: {issue.get('similarity_score', 'N/A')}).\n\n"
+            f"Review manually."
+        ), "rule_based")
+
+    def _patch_taint_flow(self, issue: Dict, chunk: Dict) -> Dict:
+        """
+        Taint flow patches are always rule-based.
+
+        The LLM only sees one function but taint flows cross
+        multiple function boundaries. It cannot reason about
+        the full call chain and will invent wrong fixes.
+        The template below explains the full picture correctly.
+        """
+        path = issue.get("taint_path", "source → sink")
+        sink = issue.get("sink_function", "unknown")
+        return self._build_patch(issue, chunk, (
+            f"User-controlled input reaches a dangerous operation.\n\n"
+            f"Taint path: {path}\n\n"
+            f"Fix — sanitize input before it reaches '{sink}':\n\n"
+            f"  # SQL injection — use parameterised queries:\n"
+            f"  cursor.execute(\n"
+            f"      'SELECT * FROM t WHERE id = %s',\n"
+            f"      (user_input,),\n"
+            f"  )\n\n"
+            f"  # Shell injection — pass as list, never shell=True:\n"
+            f"  subprocess.run(['command', user_input], shell=False)\n\n"
+            f"  # eval/exec injection — whitelist valid values:\n"
+            f"  ALLOWED = {{'read', 'write', 'list'}}\n"
+            f"  if user_input not in ALLOWED:\n"
+            f"      raise ValueError(f'Invalid input: {{user_input}}')\n\n"
+            f"Never concatenate user input into queries or commands."
+        ), "rule_based")
+
+    def _patch_statistical_anomaly(self, issue: Dict, chunk: Dict) -> Dict:
+        score = issue.get("anomaly_score", "N/A")
+        return self._build_patch(issue, chunk, (
+            f"Statistically unusual function (score: {score}).\n\n"
+            f"Common causes:\n"
+            f"  1. Dead code — remove it or add a docstring explaining why it exists\n"
+            f"  2. Copied from another project — refactor to match this codebase\n"
+            f"  3. Hidden complexity — break into smaller focused functions\n"
+            f"  4. Undocumented edge case — add a docstring explaining the context"
+        ), "rule_based")
+
+    def _patch_dna_violation(self, issue: Dict, chunk: Dict) -> Dict:
+        subtype = issue.get("subtype", "")
+        message = issue.get("message", "")
+
+        advice: Dict[str, str] = {
+            "print_in_logging_codebase": (
+                "Replace print() with logging:\n\n"
+                "  import logging\n"
+                "  logger = logging.getLogger(__name__)\n"
+                "  logger.debug('message')\n"
+                "  logger.info('message')"
+            ),
+            "missing_docstring": (
+                "Add a docstring:\n\n"
+                '  def func():\n'
+                '      """One-line summary. Explain params and return."""\n'
+                '      ...'
+            ),
+            "generic_exception_in_custom_codebase": (
+                "Use a specific exception:\n\n"
+                "  raise ValueError('specific message')\n"
+                "  # or define a domain exception:\n"
+                "  class YourError(Exception): pass\n"
+                "  raise YourError('message')"
+            ),
+        }
+
+        specific = advice.get(subtype, "")
+        return self._build_patch(issue, chunk, (
+            f"Convention violation: {message}\n\n"
+            f"{specific}" if specific else
+            f"Convention violation ({subtype}):\n"
+            f"{message}\n\n"
+            f"Align with the dominant convention in this codebase."
+        ), "rule_based")
+
+    def _patch_print_in_production(self, issue: Dict, chunk: Dict) -> Dict:
+        return self._build_patch(issue, chunk, (
+            "Replace print() with logging:\n\n"
+            "  import logging\n"
+            "  logger = logging.getLogger(__name__)\n\n"
+            "  logger.debug('value: %s', value)   # hidden in production\n"
+            "  logger.info('step complete')        # shown at INFO level\n"
+            "  logger.warning('unexpected state')  # always shown\n\n"
+            "Logging respects level filters. print() does not."
         ), "rule_based")

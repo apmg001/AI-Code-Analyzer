@@ -3,44 +3,37 @@
 """
 AI Code Analyzer — Pipeline Entry Point
 
-13 stages. 5 novel capabilities:
+14 stages. 5 novel capabilities + RAG-augmented patch generation:
 
-    Stage  3 — Taint analysis       tracks untrusted data across function calls
-    Stage  9 — Anomaly detection    learns what normal looks like, flags outliers
-    Stage 10 — Codebase DNA         learns conventions, flags violations
-    Stage 12 — Git archaeology      finds when and who introduced each bug
-    Stage 13 — Patch verification   runs test suite to confirm fixes are safe
+    Stage  3 — Taint analysis       tracks data flow across functions
+    Stage  7 — Embeddings           sentence-transformers
+    Stage  8 — RAG indexing         ChromaDB HNSW vector store  ← NEW
+    Stage 10 — Anomaly detection    IsolationForest
+    Stage 11 — Codebase DNA         convention fingerprinting
+    Stage 13 — Git archaeology      bug origin tracing
+    Stage 14 — Patch verification   test-suite validation
 
 Usage
 -----
     python analyze_repo.py <repo_url>
     python analyze_repo.py <repo_url> --provider groq
     python analyze_repo.py <repo_url> --min-confidence 0.80
-    python analyze_repo.py <repo_url> --threshold 0.65 --verbose
     python analyze_repo.py --test
-
-Environment variables
----------------------
-    ANTHROPIC_API_KEY   Claude API patches
-    GROQ_API_KEY        Groq free-tier patches
 
 Design notes
 ------------
-- Scan (step 2) runs BEFORE call graph (step 3). This ensures the
-  call graph only processes production files — not test files.
-  Previously the call graph scanned all *.py files, which caused
-  test_*.py to dominate the taint flow results.
+- Scan (stage 2) runs before call graph (stage 3) so taint
+  analysis only sees production files — not test files.
 
-- Every novel stage is wrapped in try/except. If any one of them
-  fails — missing dependency, bad repo, network issue — the pipeline
-  continues and produces partial results rather than crashing.
+- The embedder is created once in stage 7 and injected into
+  BugDetector (stage 9) to avoid loading the model twice.
 
-- The embedder is created once in step 7 and passed into BugDetector
-  in step 8. Without this, the embedding model loads twice — once
-  for chunk embeddings and once for semantic detection.
+- RAGEngine is created after embedding (stage 8) and injected
+  into PatchGenerator (stage 12). If chromadb is not installed
+  PatchGenerator falls back to standard prompts transparently.
 
-- High-confidence issues (>=0.80) are saved to a separate file so
-  downstream consumers can filter without reprocessing.
+- Every novel stage is wrapped in try/except so a failure in
+  one does not crash the entire pipeline.
 """
 
 import argparse
@@ -66,7 +59,7 @@ from evaluation.benchmark import BenchmarkReport
 
 
 # ------------------------------------------------------------------
-# Logging — configured here so every module inherits the same format
+# Logging
 # ------------------------------------------------------------------
 
 logging.basicConfig(
@@ -78,52 +71,34 @@ logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------
-# Timing context manager
+# Utilities
 # ------------------------------------------------------------------
 
 @contextmanager
 def _timed(label: str):
-    """
-    Log how long a pipeline stage takes.
-
-    Used as: `with _timed("embed"):  do_work()`
-    Produces: `       embed                     6.1s`
-    """
+    """Log how long a pipeline stage takes."""
     start = time.time()
     yield
     logger.info("       %-38s %.1fs", label, time.time() - start)
 
 
-# ------------------------------------------------------------------
-# Pipeline utilities
-# ------------------------------------------------------------------
-
 def _filter_production_chunks(
     chunks: List[Dict[str, Any]],
     config: PipelineConfig,
 ) -> List[Dict[str, Any]]:
-    """
-    Remove test-related chunks so detection focuses on production code.
-
-    Two filter rules:
-    - File path contains an excluded directory name (tests/, venv/, etc.)
-    - Function name starts with an excluded prefix (test_, conftest)
-    """
+    """Remove test files and test functions from chunks."""
     kept    = []
     removed = 0
 
     for chunk in chunks:
         path = chunk["file_path"]
-
         if any(excl in path for excl in config.excluded_dirs):
             removed += 1
             continue
-
         if any(chunk["function_name"].startswith(p)
                for p in config.excluded_prefixes):
             removed += 1
             continue
-
         kept.append(chunk)
 
     logger.info(
@@ -134,7 +109,6 @@ def _filter_production_chunks(
 
 
 def _save_json(data: Any, path: Path) -> None:
-    """Write data as formatted JSON, creating parent dirs as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, default=str)
@@ -145,27 +119,21 @@ def _high_confidence(
     issues:    List[Dict[str, Any]],
     threshold: float = 0.80,
 ) -> List[Dict[str, Any]]:
-    """Return only issues whose confidence score meets the threshold."""
     return [i for i in issues if i.get("confidence", 0) >= threshold]
 
 
 # ------------------------------------------------------------------
-# Main pipeline
+# Pipeline
 # ------------------------------------------------------------------
 
-def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None:
+def run_pipeline(
+    repo_url: str,
+    config:   PipelineConfig = DEFAULT_CONFIG,
+) -> None:
     """
-    Execute the full 13-stage analysis pipeline.
+    Execute the full 14-stage analysis pipeline.
 
     Each stage is logged with its name and elapsed time.
-    Novel stages are labelled in the module docstring above.
-
-    Parameters
-    ----------
-    repo_url : Full HTTPS URL of the GitHub repository.
-    config   : Immutable pipeline configuration. Defaults to
-               DEFAULT_CONFIG — override specific fields via
-               dataclasses.replace() rather than mutating.
     """
 
     sep = "─" * 54
@@ -177,22 +145,19 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
     logger.info(sep)
 
     # ── Stage 1: Clone ────────────────────────────────────────────
-    logger.info("[1/13] Cloning repository")
+    logger.info("[1/14] Cloning repository")
     with _timed("clone"):
         repo_path = clone_repository(repo_url, config)
 
     # ── Stage 2: Scan ─────────────────────────────────────────────
-    # Scan BEFORE call graph so taint analysis only sees
-    # production files — not test files. This was the root cause
-    # of 70 false taint flows in Flask (test files were scanned).
-    logger.info("[2/13] Scanning Python files")
+    # Scan BEFORE call graph so taint analysis uses filtered files
+    logger.info("[2/14] Scanning Python files")
     with _timed("scan"):
         python_files = scan_python_files(repo_path, config)
     logger.info("       Found %d files", len(python_files))
 
-    # ── Stage 3: Taint analysis (novel) ───────────────────────────
-    # Uses python_files — already filtered. No test files included.
-    logger.info("[3/13] Building call graph — taint analysis")
+    # ── Stage 3: Taint analysis ───────────────────────────────────
+    logger.info("[3/14] Building call graph — taint analysis")
     taint_issues: List[Dict[str, Any]] = []
     try:
         from analysis.call_graph import CallGraphBuilder
@@ -204,41 +169,59 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
             len(cg.sources), len(cg.sinks), len(taint_issues),
         )
     except Exception as exc:
-        logger.warning("Taint analysis skipped (non-fatal): %s", exc)
+        logger.warning("Taint analysis skipped: %s", exc)
 
     # ── Stage 4: Extract ──────────────────────────────────────────
-    logger.info("[4/13] Extracting functions via AST")
+    logger.info("[4/14] Extracting functions via AST")
     with _timed("extract"):
         functions = extract_functions_from_files(python_files)
     logger.info("       Extracted %d functions", len(functions))
 
     # ── Stage 5: Chunk ────────────────────────────────────────────
-    logger.info("[5/13] Creating code chunks")
+    logger.info("[5/14] Creating code chunks")
     with _timed("chunk"):
         chunks = chunk_functions(functions, config)
     logger.info("       Generated %d chunks", len(chunks))
 
     # ── Stage 6: Filter ───────────────────────────────────────────
-    logger.info("[6/13] Filtering to production code")
+    logger.info("[6/14] Filtering to production code")
     with _timed("filter"):
         chunks = _filter_production_chunks(chunks, config)
 
     # ── Stage 7: Embed ────────────────────────────────────────────
-    # The embedder is stored and passed into BugDetector (stage 8)
-    # so the model is loaded exactly once per pipeline run.
-    logger.info("[7/13] Generating embeddings")
+    # Embedder created once and reused by BugDetector (stage 9)
+    # to avoid loading the model a second time.
+    logger.info("[7/14] Generating embeddings")
     with _timed("embed"):
         embedder = CodeEmbedder(config)
         chunks   = embed_chunks(chunks, embedder)
 
-    # ── Stage 8: Rule-based + semantic detection ───────────────────
-    logger.info("[8/13] Rule-based + semantic detection")
+    # ── Stage 8: RAG indexing ─────────────────────────────────────
+    # Index chunks in ChromaDB so PatchGenerator can retrieve
+    # style-similar code when building LLM prompts.
+    logger.info("[8/14] RAG — indexing chunks in ChromaDB")
+    rag_engine = None
+    try:
+        from embeddings.rag_engine import RAGEngine
+        with _timed("rag index"):
+            rag_engine = RAGEngine(repo_url=repo_url)
+            indexed    = rag_engine.index(chunks)
+        logger.info(
+            "       RAG: %d new chunks indexed (%d total)",
+            indexed, rag_engine.indexed_count,
+        )
+    except Exception as exc:
+        logger.warning("RAG indexing skipped (non-fatal): %s", exc)
+
+    # ── Stage 9: Rule-based + semantic detection ───────────────────
+    logger.info("[9/14] Rule-based + semantic detection")
     with _timed("rule + semantic"):
+        # Inject existing embedder — avoids loading model twice
         detector = BugDetector(config, embedder=embedder)
         issues   = detector.analyze_chunks(chunks)
 
-    # ── Stage 9: Anomaly detection (novel) ────────────────────────
-    logger.info("[9/13] Statistical anomaly detection")
+    # ── Stage 10: Anomaly detection ───────────────────────────────
+    logger.info("[10/14] Statistical anomaly detection")
     anomaly_issues: List[Dict[str, Any]] = []
     try:
         from analysis.anomaly_detector import AnomalyDetector
@@ -249,10 +232,10 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
             issues.extend(anomaly_issues)
         logger.info("       Anomalies found: %d", len(anomaly_issues))
     except Exception as exc:
-        logger.warning("Anomaly detection skipped (non-fatal): %s", exc)
+        logger.warning("Anomaly detection skipped: %s", exc)
 
-    # ── Stage 10: Codebase DNA (novel) ────────────────────────────
-    logger.info("[10/13] Codebase DNA fingerprinting")
+    # ── Stage 11: Codebase DNA ────────────────────────────────────
+    logger.info("[11/14] Codebase DNA fingerprinting")
     dna_issues: List[Dict[str, Any]] = []
     try:
         from analysis.codebase_dna import CodebaseDNA
@@ -264,41 +247,40 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
         logger.info(profile.summary())
         logger.info("       Convention violations: %d", len(dna_issues))
     except Exception as exc:
-        logger.warning("DNA analysis skipped (non-fatal): %s", exc)
+        logger.warning("DNA analysis skipped: %s", exc)
 
-    # Add taint issues last — they have no chunk_id in chunks
-    # so they skip patch generation and go straight to output
+    # Add taint issues
     issues.extend(taint_issues)
 
-    # Confidence breakdown
-    high_conf = _high_confidence(issues, threshold=0.80)
+    # Confidence summary
+    high_conf = _high_confidence(issues, 0.80)
     logger.info(
         "       Total issues: %d  High confidence (>=0.80): %d",
         len(issues), len(high_conf),
     )
 
-    # ── Stage 11: Patch generation ────────────────────────────────
-    logger.info("[11/13] Generating patch suggestions")
+    # ── Stage 12: Patch generation ────────────────────────────────
+    # Inject RAG engine — if available, patches use style-aware prompts
+    logger.info("[12/14] Generating patches")
+    logger.info(
+        "       RAG-augmented prompts: %s",
+        "enabled" if (rag_engine and rag_engine.is_available) else "disabled",
+    )
     with _timed("patches"):
-        patcher = PatchGenerator(config)
+        patcher = PatchGenerator(config, rag_engine=rag_engine)
         patches = patcher.generate_patches(issues, chunks)
     logger.info("       Generated %d patches", len(patches))
 
-    # ── Stage 12: Git archaeology (novel) ─────────────────────────
-    logger.info("[12/13] Git archaeology — tracing bug origins")
+    # ── Stage 13: Git archaeology ─────────────────────────────────
+    logger.info("[13/14] Git archaeology — tracing bug origins")
     try:
         from analysis.git_archaeologist import GitArchaeologist
         with _timed("git archaeology"):
             arch = GitArchaeologist(repo_path)
-
             if arch._usable:
-                # Only investigate high-confidence issues — archaeology
-                # runs git subprocesses so we cap at 20 to stay fast
                 to_investigate = _high_confidence(issues, 0.80)[:20]
                 enriched       = arch.investigate_batch(to_investigate)
-
-                # Merge archaeology results back onto the issue list
-                enriched_map = {
+                enriched_map   = {
                     e["chunk_id"]: e.get("archaeology")
                     for e in enriched
                 }
@@ -306,30 +288,44 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
                     cid = issue.get("chunk_id")
                     if cid in enriched_map:
                         issue["archaeology"] = enriched_map[cid]
-
                 found = sum(
                     1 for e in enriched
                     if e.get("archaeology", {}).get("investigated")
                 )
-                logger.info("       Investigated %d/%d issues", found, len(to_investigate))
+                logger.info(
+                    "       Investigated %d/%d issues",
+                    found, len(to_investigate),
+                )
             else:
-                logger.info("       Skipped — repo has no git history")
+                logger.info("       Skipped — no git history available")
     except Exception as exc:
-        logger.warning("Git archaeology skipped (non-fatal): %s", exc)
+        logger.warning("Git archaeology skipped: %s", exc)
 
-    # ── Stage 13: Patch verification (novel) ──────────────────────
-    logger.info("[13/13] Verifying patches against test suite")
+    # ── Stage 14: Patch verification ──────────────────────────────
+    logger.info("[14/14] Verifying patches against test suite")
     try:
         from analysis.patch_verifier import PatchVerifier
         with _timed("patch verification"):
             verifier = PatchVerifier(repo_path)
             for patch in patches:
+                fix = patch.get("suggested_fix", "")
+                is_template = any(phrase in fix for phrase in [
+                    "Statistically unusual",
+                    "Flagged as similar",
+                    "convention violation",
+                    "Taint path:",
+                    "Manual review",
+                ])
+                if is_template:
+                    continue
+
                 result = verifier.verify(patch)
                 patch["verification"] = result
 
-                # Log a one-line verdict per patch
-                status = ("✅" if result["verified"] is True  else
-                          "❌" if result["verified"] is False else "⚠️ ")
+                status = (
+                    "✅" if result["verified"] is True  else
+                    "❌" if result["verified"] is False else "⚠️ "
+                )
                 logger.info(
                     "       %s  %-28s  %s",
                     status,
@@ -337,7 +333,7 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
                     result["reason"][:50],
                 )
     except Exception as exc:
-        logger.warning("Patch verification skipped (non-fatal): %s", exc)
+        logger.warning("Patch verification skipped: %s", exc)
 
     # ── Evaluation report ─────────────────────────────────────────
     report = BenchmarkReport(chunks, issues, patches)
@@ -356,42 +352,28 @@ def run_pipeline(repo_url: str, config: PipelineConfig = DEFAULT_CONFIG) -> None
 
 
 # ------------------------------------------------------------------
-# Quick test — verify changes without a full repo run
+# Quick test
 # ------------------------------------------------------------------
 
 def quick_test() -> None:
     """
-    Run the pipeline on a tiny hand-crafted file.
+    Run on a tiny local sample — completes in ~60 seconds.
+    Tests the full pipeline without a git clone.
 
-    Completes in ~60 seconds. Use this after every change
-    to confirm the pipeline still runs end to end before
-    committing a 20-minute Flask run.
-
-    What to watch for:
-    - "Loading embedding model" should appear ONCE only
-    - All 5 issue types should be detected
-    - Confidence scores should be attached to every issue
+    Watch for:
+    - "Loading embedding model" appears ONCE only
+    - All issue types detected with confidence scores
+    - RAG engine initialises (if chromadb is installed)
     """
-
     test_dir = Path("repos/test_quick/src")
     test_dir.mkdir(parents=True, exist_ok=True)
 
-    # One function per issue type — easy to verify detection
     (test_dir / "sample.py").write_text(
-        "def divide(a, b):\n"
-        "    return a / 0\n\n"
-        "def load_data(items=[]):\n"
-        "    items.append(1)\n"
-        "    return items\n\n"
-        "def run_code(user_input):\n"
-        "    eval(user_input)\n\n"
-        "def fetch():\n"
-        "    try:\n"
-        "        pass\n"
-        "    except:\n"
-        "        pass\n\n"
-        'def debug_output():\n'
-        '    print("debug value")\n'
+        "def divide(a, b):\n    return a / 0\n\n"
+        "def load_data(items=[]):\n    items.append(1)\n    return items\n\n"
+        "def run_code(user_input):\n    eval(user_input)\n\n"
+        "def fetch():\n    try:\n        pass\n    except:\n        pass\n\n"
+        'def debug_output():\n    print("debug")\n'
     )
 
     print("\n[QUICK TEST MODE]\n")
@@ -400,12 +382,20 @@ def quick_test() -> None:
     files    = scan_python_files(Path("repos/test_quick"), config)
     funcs    = extract_functions_from_files(files)
     chunks   = chunk_functions(funcs, config)
-
-    # Embedder created here — passed into detector below
-    # Model should appear in logs exactly ONCE
     embedder = CodeEmbedder(config)
     chunks   = embed_chunks(chunks, embedder)
 
+    # Test RAG engine initialisation
+    rag_engine = None
+    try:
+        from embeddings.rag_engine import RAGEngine
+        rag_engine = RAGEngine(repo_url="test_quick")
+        rag_engine.index(chunks)
+        print(f"RAG    : {rag_engine.indexed_count} chunks indexed")
+    except Exception as exc:
+        print(f"RAG    : skipped ({exc})")
+
+    # Embedder injected — model loads ONCE
     detector = BugDetector(config, embedder=embedder)
     issues   = detector.analyze_chunks(chunks)
 
@@ -426,18 +416,11 @@ def quick_test() -> None:
 # ------------------------------------------------------------------
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    """
-    Define the command-line interface.
-
-    Each flag maps to a PipelineConfig override so the core
-    pipeline logic never reads from sys.argv directly.
-    """
-
     parser = argparse.ArgumentParser(
         prog="analyze_repo",
         description=(
             "AI Code Analyzer — taint analysis, anomaly detection, "
-            "codebase DNA, git archaeology, patch verification."
+            "codebase DNA, RAG patches, git archaeology, patch verification."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -445,16 +428,11 @@ examples:
   python analyze_repo.py https://github.com/pallets/flask
   python analyze_repo.py https://github.com/pallets/flask --provider groq
   python analyze_repo.py https://github.com/pallets/flask --min-confidence 0.80
-  python analyze_repo.py https://github.com/pallets/flask --threshold 0.65
   python analyze_repo.py --test
         """,
     )
 
-    parser.add_argument(
-        "repo_url",
-        nargs="?",
-        help="GitHub repository URL to analyze",
-    )
+    parser.add_argument("repo_url", nargs="?", help="GitHub repository URL")
     parser.add_argument(
         "--provider",
         choices=["llamacpp", "anthropic", "groq", "ollama"],
@@ -475,7 +453,7 @@ examples:
     parser.add_argument(
         "--output",
         type=str,
-        help="Directory to save results (default: analysis_results/)",
+        help="Results directory (default: analysis_results/)",
     )
     parser.add_argument(
         "--verbose",
@@ -485,14 +463,13 @@ examples:
     parser.add_argument(
         "--test",
         action="store_true",
-        help="Run quick test on local sample code — no git clone needed",
+        help="Run quick test on local sample — no git clone needed",
     )
 
     return parser
 
 
 def main() -> None:
-
     parser = _build_arg_parser()
     args   = parser.parse_args()
 
@@ -507,16 +484,15 @@ def main() -> None:
         parser.print_help()
         sys.exit(1)
 
-    # Build config overrides from CLI flags.
-    # dataclasses.replace() produces a new frozen instance —
-    # the original DEFAULT_CONFIG is never mutated.
     overrides: Dict[str, Any] = {}
     if args.provider:   overrides["llm_provider"]         = args.provider
     if args.threshold:  overrides["similarity_threshold"] = args.threshold
     if args.output:     overrides["results_dir"]          = Path(args.output)
 
-    config = (dataclasses.replace(DEFAULT_CONFIG, **overrides)
-              if overrides else DEFAULT_CONFIG)
+    config = (
+        dataclasses.replace(DEFAULT_CONFIG, **overrides)
+        if overrides else DEFAULT_CONFIG
+    )
 
     try:
         run_pipeline(args.repo_url, config)

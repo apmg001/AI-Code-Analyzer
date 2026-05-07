@@ -17,10 +17,10 @@
     "taint_flow": 3
   },
   "patch_metrics": {
-    "patched_issues": 11,
-    "coverage_pct": 23.9,
-    "llm_count": 10,
-    "rule_count": 1
+    "patched_issues": 46,
+    "coverage_pct": 100.0,
+    "llm_count": 1,
+    "rule_count": 45
   },
   "top_files": [
     [

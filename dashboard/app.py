@@ -6,8 +6,10 @@ FastAPI dashboard backend for AI Code Analyzer.
 Reads analysis_results/ JSON files and serves them
 to the dashboard template.
 
-Also exposes endpoints to trigger a new analysis
-run and stream progress logs back to the UI.
+Also exposes endpoints to:
+- Trigger a new analysis run
+- Start / stop the llama.cpp server
+- Stream progress logs back to the UI
 
 Usage
 -----
@@ -22,6 +24,7 @@ Usage
 import json
 import subprocess
 import sys
+import urllib.request
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -35,27 +38,27 @@ from fastapi.templating import Jinja2Templates
 # App + paths
 # ------------------------------------------------------------------
 
-app = FastAPI(
-    title="AI Code Analyzer Dashboard",
-    version="1.0.0",
-)
+app = FastAPI(title="AI Code Analyzer Dashboard", version="1.0.0")
 
-# dashboard/app.py lives inside the dashboard/ folder
-# so BASE_DIR is the dashboard/ folder itself
 BASE_DIR    = Path(__file__).parent
-PROJECT_DIR = BASE_DIR.parent                        # project root
-RESULTS_DIR = PROJECT_DIR / "analysis_results"      # where JSONs live
+PROJECT_DIR = BASE_DIR.parent
+RESULTS_DIR = PROJECT_DIR / "analysis_results"
 TEMPLATES   = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
+# llama.cpp server binary and model — auto-detected from project
+LLAMA_SERVER = PROJECT_DIR / "llama.cpp" / "build" / "bin" / "llama-server"
+LLAMA_MODEL  = PROJECT_DIR / "llama.cpp" / "models" / "qwen2.5-coder-14b-q4.gguf"
+
 
 # ------------------------------------------------------------------
-# Analysis state
-# Simple in-memory state — one analysis at a time.
-# For production you'd use Redis or a proper task queue.
+# State
 # ------------------------------------------------------------------
 
-_running: bool       = False
-_log:     List[str]  = []
+_analysis_running: bool      = False
+_analysis_log:     List[str] = []
+
+_llama_process:    Optional[subprocess.Popen] = None
+_llama_log:        List[str] = []
 
 
 # ------------------------------------------------------------------
@@ -63,10 +66,6 @@ _log:     List[str]  = []
 # ------------------------------------------------------------------
 
 def _load(filename: str) -> Any:
-    """
-    Load a JSON file from analysis_results/.
-    Returns None silently if the file does not exist yet.
-    """
     path = RESULTS_DIR / filename
     if not path.exists():
         return None
@@ -76,43 +75,39 @@ def _load(filename: str) -> Any:
         return None
 
 
+def _llama_server_running() -> bool:
+    """Check if the llama.cpp server is actually responding."""
+    try:
+        urllib.request.urlopen(
+            "http://127.0.0.1:8080/v1/models", timeout=2
+        )
+        return True
+    except Exception:
+        return False
+
+
 def _build_dashboard_data() -> Dict[str, Any]:
-    """
-    Aggregate all result files into one dict the template can use.
-
-    This is the single place that knows the JSON schemas — the
-    template just reads values, it never touches files directly.
-    """
-
     issues    = _load("issues.json")    or []
     patches   = _load("patches.json")   or []
     benchmark = _load("benchmark.json") or {}
     high_conf = _load("issues_high_confidence.json") or []
 
     if not issues:
-        return {"has_results": False}
+        return {
+            "has_results":    False,
+            "llama_running":  _llama_server_running(),
+        }
 
-    # ── Severity breakdown ─────────────────────────────────────
-    severity_counts = Counter(
-        i.get("severity", "unknown") for i in issues
-    )
+    severity_counts = Counter(i.get("severity", "unknown") for i in issues)
+    type_counts     = Counter(i.get("type", "unknown")     for i in issues)
 
-    # ── Issue type breakdown ───────────────────────────────────
-    type_counts = Counter(
-        i.get("type", "unknown") for i in issues
-    )
-
-    # ── Top files by issue count ───────────────────────────────
     file_counts: Dict[str, int] = defaultdict(int)
     for issue in issues:
-        # Use just the filename — not the full path
         fname = issue.get("file", "unknown").split("/")[-1]
         file_counts[fname] += 1
 
     top_files = sorted(file_counts.items(), key=lambda x: -x[1])[:8]
 
-    # ── Patch source breakdown ─────────────────────────────────
-    # patch_source can be "llamacpp", "llm", "rule_based", "none"
     llm_patches  = sum(
         1 for p in patches
         if p.get("patch_source") not in ("rule_based", "none", None)
@@ -122,180 +117,216 @@ def _build_dashboard_data() -> Dict[str, Any]:
         if p.get("patch_source") == "rule_based"
     )
 
-    # ── Patch coverage ─────────────────────────────────────────
     patched  = sum(1 for p in patches if p.get("patch_source") != "none")
     coverage = round(patched / len(issues) * 100, 1) if issues else 0.0
 
-    # ── Confidence distribution ────────────────────────────────
-    conf_buckets = {"≥90%": 0, "70–89%": 0, "50–69%": 0, "<50%": 0}
+    conf_buckets = {">=90%": 0, "70-89%": 0, "50-69%": 0, "<50%": 0}
     for issue in issues:
         c = issue.get("confidence", 0)
-        if   c >= 0.90: conf_buckets["≥90%"]    += 1
-        elif c >= 0.70: conf_buckets["70–89%"]  += 1
-        elif c >= 0.50: conf_buckets["50–69%"]  += 1
-        else:           conf_buckets["<50%"]     += 1
-
-    # ── Novel detection counts ─────────────────────────────────
-    taint_count   = sum(1 for i in issues if i.get("type") == "taint_flow")
-    anomaly_count = sum(1 for i in issues if i.get("type") == "statistical_anomaly")
-    dna_count     = sum(1 for i in issues if i.get("type") == "dna_violation")
-
-    # ── Issues sorted by confidence for the feed ──────────────
-    recent_issues = sorted(
-        issues,
-        key=lambda x: x.get("confidence", 0),
-        reverse=True,
-    )[:20]
+        if   c >= 0.90: conf_buckets[">=90%"]  += 1
+        elif c >= 0.70: conf_buckets["70-89%"] += 1
+        elif c >= 0.50: conf_buckets["50-69%"] += 1
+        else:           conf_buckets["<50%"]    += 1
 
     return {
-        "has_results":    True,
-        "total_issues":   len(issues),
-        "total_patches":  len(patches),
+        "has_results":     True,
+        "total_issues":    len(issues),
+        "total_patches":   len(patches),
         "high_confidence": len(high_conf),
-        "coverage_pct":   coverage,
-        "llm_patches":    llm_patches,
-        "rule_patches":   rule_patches,
-        "taint_count":    taint_count,
-        "anomaly_count":  anomaly_count,
-        "dna_count":      dna_count,
-        "severity":       dict(severity_counts),
-        "issue_types":    dict(type_counts),
-        "top_files":      top_files,
-        "conf_buckets":   conf_buckets,
-        "recent_issues":  recent_issues,
-        "patches":        patches[:25],
-        "benchmark":      benchmark,
+        "coverage_pct":    coverage,
+        "llm_patches":     llm_patches,
+        "rule_patches":    rule_patches,
+        "taint_count":     sum(1 for i in issues if i.get("type") == "taint_flow"),
+        "anomaly_count":   sum(1 for i in issues if i.get("type") == "statistical_anomaly"),
+        "dna_count":       sum(1 for i in issues if i.get("type") == "dna_violation"),
+        "severity":        dict(severity_counts),
+        "issue_types":     dict(type_counts),
+        "top_files":       top_files,
+        "conf_buckets":    conf_buckets,
+        "recent_issues":   sorted(issues, key=lambda x: x.get("confidence", 0), reverse=True)[:20],
+        "patches":         patches[:25],
+        "benchmark":       benchmark,
+        "llama_running":   _llama_server_running(),
     }
 
 
 # ------------------------------------------------------------------
-# Routes
+# Routes — dashboard
 # ------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """
-    Serve the main dashboard page.
-    Builds data fresh on every request so the page always
-    reflects the latest analysis_results/ files.
-    """
     data = _build_dashboard_data()
-    return TEMPLATES.TemplateResponse(
-        "index.html",
-        {"request": request, "data": data},
-    )
+    return TEMPLATES.TemplateResponse("index.html", {"request": request, "data": data})
 
 
 @app.get("/api/summary")
 async def api_summary():
-    """
-    JSON version of the dashboard data.
-    Used by the auto-refresh JS in the template.
-    """
     return JSONResponse(_build_dashboard_data())
 
 
 @app.get("/api/issues")
 async def api_issues():
-    """Full issues list — useful for debugging or external tools."""
     return JSONResponse(_load("issues.json") or [])
 
 
 @app.get("/api/patches")
 async def api_patches():
-    """Full patches list."""
     return JSONResponse(_load("patches.json") or [])
 
 
+# ------------------------------------------------------------------
+# Routes — analysis
+# ------------------------------------------------------------------
+
 @app.post("/api/analyze")
-async def api_analyze(
-    background_tasks: BackgroundTasks,
-    repo_url: str = "",
-):
-    """
-    Trigger a new analysis pipeline run in the background.
+async def api_analyze(background_tasks: BackgroundTasks, repo_url: str = ""):
+    global _analysis_running, _analysis_log
 
-    Returns immediately with status "started".
-    Poll /api/status to get progress logs.
-
-    One analysis at a time — returns 409 if already running.
-    """
-    global _running, _log
-
-    if _running:
-        return JSONResponse(
-            {"status": "already_running",
-             "message": "An analysis is already in progress."},
-            status_code=409,
-        )
+    if _analysis_running:
+        return JSONResponse({"status": "already_running"}, status_code=409)
 
     if not repo_url.strip():
-        return JSONResponse(
-            {"status": "error", "message": "repo_url is required"},
-            status_code=400,
-        )
+        return JSONResponse({"status": "error", "message": "repo_url required"}, status_code=400)
 
-    _log     = [f"Starting: {repo_url}"]
+    _analysis_log = [f"Starting: {repo_url}"]
     background_tasks.add_task(_run_pipeline, repo_url.strip())
-
     return JSONResponse({"status": "started", "repo_url": repo_url})
 
 
 @app.get("/api/status")
 async def api_status():
-    """
-    Return current analysis status and the last 20 log lines.
-    The frontend polls this every 1.5 seconds when a run is active.
-    """
     return JSONResponse({
-        "running": _running,
-        "log":     _log[-20:],
+        "running":       _analysis_running,
+        "log":           _analysis_log[-20:],
+        "llama_running": _llama_server_running(),
     })
 
 
 # ------------------------------------------------------------------
-# Background task — runs the pipeline
+# Routes — llama.cpp server control
 # ------------------------------------------------------------------
 
-def _run_pipeline(repo_url: str) -> None:
+@app.post("/api/llama/start")
+async def llama_start(background_tasks: BackgroundTasks):
     """
-    Spawn analyze_repo.py as a subprocess and capture its output
-    into _log so the frontend can stream it in real time.
-
-    Runs in a FastAPI background task — does not block the server.
+    Start the llama.cpp server as a background process.
+    Returns immediately — poll /api/llama/status for readiness.
     """
-    global _running, _log
+    global _llama_process, _llama_log
 
-    _running = True
+    if _llama_server_running():
+        return JSONResponse({"status": "already_running"})
+
+    if not LLAMA_SERVER.exists():
+        return JSONResponse(
+            {"status": "error",
+             "message": f"llama-server not found at {LLAMA_SERVER}"},
+            status_code=404,
+        )
+
+    if not LLAMA_MODEL.exists():
+        return JSONResponse(
+            {"status": "error",
+             "message": f"Model not found at {LLAMA_MODEL}"},
+            status_code=404,
+        )
+
+    _llama_log = ["Starting llama.cpp server…"]
+    background_tasks.add_task(_start_llama_server)
+    return JSONResponse({"status": "starting"})
+
+
+@app.post("/api/llama/stop")
+async def llama_stop():
+    """Terminate the llama.cpp server process."""
+    global _llama_process
+
+    if _llama_process is None:
+        return JSONResponse({"status": "not_running"})
 
     try:
-        analyzer_path = PROJECT_DIR / "analyze_repo.py"
+        _llama_process.terminate()
+        _llama_process.wait(timeout=5)
+        _llama_process = None
+        return JSONResponse({"status": "stopped"})
+    except Exception as exc:
+        return JSONResponse({"status": "error", "message": str(exc)}, status_code=500)
 
-        process = subprocess.Popen(
-            [sys.executable, str(analyzer_path), repo_url],
+
+@app.get("/api/llama/status")
+async def llama_status():
+    """Return whether the server is running and recent log lines."""
+    return JSONResponse({
+        "running": _llama_server_running(),
+        "log":     _llama_log[-15:],
+    })
+
+
+# ------------------------------------------------------------------
+# Background tasks
+# ------------------------------------------------------------------
+
+def _start_llama_server() -> None:
+    """Spawn llama-server and stream its output into _llama_log."""
+    global _llama_process, _llama_log
+
+    try:
+        _llama_process = subprocess.Popen(
+            [
+                str(LLAMA_SERVER),
+                "--model",         str(LLAMA_MODEL),
+                "--port",          "8080",
+                "--ctx-size",      "2048",
+                "--n-gpu-layers",  "99",
+                "--threads",       "8",
+            ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,   # merge stderr into stdout
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+        for line in _llama_process.stdout:
+            line = line.rstrip()
+            if line:
+                _llama_log.append(line)
+                # Stop reading once server is ready
+                if "server is listening" in line:
+                    _llama_log.append("✓ Server ready at http://127.0.0.1:8080")
+                    break
+
+    except Exception as exc:
+        _llama_log.append(f"✗ Failed to start server: {exc}")
+
+
+def _run_pipeline(repo_url: str) -> None:
+    """Run analyze_repo.py as a subprocess and capture logs."""
+    global _analysis_running, _analysis_log
+
+    _analysis_running = True
+
+    try:
+        analyzer = PROJECT_DIR / "analyze_repo.py"
+        proc = subprocess.Popen(
+            [sys.executable, str(analyzer), repo_url],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             cwd=str(PROJECT_DIR),
         )
 
-        for raw_line in process.stdout:
-            line = raw_line.rstrip()
+        for line in proc.stdout:
+            line = line.rstrip()
             if line:
-                _log.append(line)
+                _analysis_log.append(line)
 
-        process.wait()
-
-        if process.returncode == 0:
-            _log.append("✓ Analysis complete")
-        else:
-            _log.append(f"✗ Pipeline exited with code {process.returncode}")
-
-    except FileNotFoundError:
-        _log.append("✗ analyze_repo.py not found — check project structure")
+        proc.wait()
+        _analysis_log.append(
+            "✓ Analysis complete" if proc.returncode == 0
+            else f"✗ Pipeline exited with code {proc.returncode}"
+        )
 
     except Exception as exc:
-        _log.append(f"✗ Unexpected error: {exc}")
-
+        _analysis_log.append(f"✗ Error: {exc}")
     finally:
-        _running = False
+        _analysis_running = False

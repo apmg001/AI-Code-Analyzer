@@ -10,40 +10,103 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:14px;line-height:1.5}
-.nav{background:#fff;border-bottom:1px solid #e4e4e7;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
-.nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:#18181b}
-.nav-dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+
+/* NAV */
+.nav{background:#fff;border-bottom:1px solid #e4e4e7;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:20px}
+.nav-brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:#22c55e}
+
+/* LLAMA STATUS */
+.llama-status{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;
+  border-radius:7px;
+  border:1px solid #e4e4e7;
+  font-size:12px;font-weight:500;
+  cursor:pointer;
+  transition:all .15s;
+  user-select:none;
+}
+.llama-status:hover{border-color:#a1a1aa}
+.llama-dot{width:6px;height:6px;border-radius:50%}
+.llama-dot.on{background:#22c55e}
+.llama-dot.off{background:#f59e0b;animation:pulse 1.5s ease-in-out infinite}
+.llama-dot.starting{background:#3b82f6;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.llama-label{color:#52525b}
+
 .nav-right{display:flex;align-items:center;gap:8px}
-.nav-input{border:1px solid #e4e4e7;border-radius:6px;background:#fafafa;color:#18181b;font-family:'Inter',sans-serif;font-size:13px;padding:7px 12px;width:280px;outline:none;transition:border-color .15s}
+.nav-input{border:1px solid #e4e4e7;border-radius:6px;background:#fafafa;color:#18181b;font-family:'Inter',sans-serif;font-size:13px;padding:7px 12px;width:260px;outline:none;transition:border-color .15s}
 .nav-input:focus{border-color:#71717a}
 .nav-input::placeholder{color:#a1a1aa}
-.btn{background:#18181b;color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:7px 16px;cursor:pointer;transition:background .15s}
+.btn{background:#18181b;color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:7px 16px;cursor:pointer;transition:background .15s;white-space:nowrap}
 .btn:hover{background:#27272a}
 .btn:disabled{background:#a1a1aa;cursor:not-allowed}
-.page{max-width:1200px;margin:0 auto;padding:28px 24px 48px}
-.page-header{margin-bottom:24px}
-.page-title{font-size:20px;font-weight:600;margin-bottom:4px}
+
+/* PAGE */
+.page{max-width:1200px;margin:0 auto;padding:24px 24px 48px}
+.page-header{margin-bottom:20px}
+.page-title{font-size:20px;font-weight:600;margin-bottom:3px}
 .page-sub{font-size:13px;color:#71717a}
-.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+
+/* LLAMA PANEL */
+.llama-panel{
+  background:#fff;
+  border:1px solid #e4e4e7;
+  border-radius:10px;
+  padding:16px 20px;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.llama-panel-left{display:flex;align-items:center;gap:12px}
+.llama-panel-icon{font-size:20px}
+.llama-panel-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.llama-panel-sub{font-size:12px;color:#71717a}
+.llama-panel-right{display:flex;align-items:center;gap:8px}
+.btn-start{background:#18181b;color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:7px 14px;cursor:pointer;transition:background .15s}
+.btn-start:hover{background:#27272a}
+.btn-stop{background:#fff;color:#ef4444;border:1px solid #fecaca;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:7px 14px;cursor:pointer;transition:all .15s}
+.btn-stop:hover{background:#fef2f2}
+.server-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;
+  font-size:12px;font-weight:500;
+}
+.server-badge.online{background:#dcfce7;color:#15803d}
+.server-badge.offline{background:#fef9c3;color:#92400e}
+.server-badge.starting{background:#dbeafe;color:#1d4ed8}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
 .stat{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:16px}
 .stat-label{font-size:12px;color:#71717a;font-weight:500;margin-bottom:6px}
 .stat-value{font-size:26px;font-weight:600;letter-spacing:-0.5px;line-height:1;margin-bottom:2px}
 .stat-sub{font-size:11px;color:#a1a1aa}
+
+/* GRIDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
-.mb{margin-bottom:12px}
+
+/* CARD */
 .card{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px}
 .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.card-title{font-size:13px;font-weight:600;color:#18181b}
+.card-title{font-size:13px;font-weight:600}
 .badge{background:#f4f4f5;border:1px solid #e4e4e7;border-radius:20px;padding:2px 10px;font-size:11px;color:#71717a;font-weight:500}
 .ch{height:180px;position:relative}
 .ch-sm{height:130px;position:relative}
+
+/* SEVERITY */
 .sev-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f4f4f5}
 .sev-item:last-child{border:none}
 .sev-name{width:58px;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
 .sev-track{flex:1;height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden}
 .sev-fill{height:100%;border-radius:2px}
 .sev-count{font-size:13px;font-weight:600;min-width:22px;text-align:right}
+
+/* FILES */
 .file-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4f4f5}
 .file-row:last-child{border:none}
 .file-name{font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#3b82f6}
@@ -51,6 +114,8 @@ body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:1
 .mini-track{width:64px;height:3px;background:#f4f4f5;border-radius:2px}
 .mini-fill{height:100%;background:#3b82f6;border-radius:2px}
 .file-n{font-size:12px;font-weight:600;color:#71717a;min-width:16px;text-align:right}
+
+/* DNA */
 .dna-row{padding:10px 0;border-bottom:1px solid #f4f4f5}
 .dna-row:last-child{border:none}
 .dna-head{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
@@ -59,6 +124,8 @@ body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:1
 .dna-track{height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden;margin-bottom:4px}
 .dna-fill{height:100%;border-radius:2px}
 .dna-dom{font-size:11px;color:#a1a1aa}
+
+/* ISSUES */
 .issues-list{max-height:360px;overflow-y:auto}
 .issues-list::-webkit-scrollbar{width:3px}
 .issues-list::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:2px}
@@ -70,6 +137,8 @@ body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:1
 .issue-fn{font-size:13px;font-weight:500;font-family:'SF Mono','Fira Code',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .issue-loc{font-size:11px;color:#a1a1aa;margin-top:2px}
 .conf-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;flex-shrink:0}
+
+/* PATCHES */
 .patches-list{max-height:360px;overflow-y:auto}
 .patches-list::-webkit-scrollbar{width:3px}
 .patches-list::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:2px}
@@ -82,25 +151,38 @@ body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;font-size:1
 .rule-pill{background:#eff6ff;color:#1d4ed8}
 .patch-sub{font-size:11px;color:#a1a1aa}
 .verify-tag{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;font-weight:500}
-.log-area{display:none;background:#18181b;border-radius:8px;padding:14px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;height:180px;overflow-y:auto;margin-top:12px}
-.log-area.on{display:block}
-.ll{color:#52525b;margin-bottom:1px}
+
+/* LOG */
+.log-box{background:#18181b;border-radius:8px;padding:14px;font-family:'SF Mono','Fira Code',monospace;font-size:11px;height:160px;overflow-y:auto;margin-top:10px;display:none}
+.log-box.on{display:block}
+.ll{color:#52525b;margin-bottom:1px;line-height:1.4}
 .ll.i{color:#22c55e}
 .ll.w{color:#f59e0b}
 .ll.d{color:#60a5fa}
-.empty{text-align:center;padding:72px 40px;background:#fff;border:1px solid #e4e4e7;border-radius:10px}
+
+/* EMPTY */
+.empty{text-align:center;padding:64px 40px;background:#fff;border:1px solid #e4e4e7;border-radius:10px}
 .empty h2{font-size:18px;font-weight:600;margin-bottom:8px}
 .empty p{color:#71717a;font-size:13px;line-height:1.7;margin-bottom:16px}
 .empty code{display:inline-block;background:#f4f4f5;border-radius:6px;padding:8px 16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#18181b}
-footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:center;font-size:12px;color:#a1a1aa}
+
+footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:24px;text-align:center;font-size:12px;color:#a1a1aa}
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav class="nav">
-  <div class="nav-brand">
-    <div class="nav-dot"></div>
-    AI Code Analyzer
+  <div class="nav-left">
+    <div class="nav-brand">
+      <div class="nav-dot"></div>
+      AI Code Analyzer
+    </div>
+    <!-- Llama status pill in nav -->
+    <div class="llama-status" onclick="toggleLlama()" id="llamaNavBtn" title="Click to start/stop llama.cpp">
+      <div class="llama-dot off" id="llamaNavDot"></div>
+      <span class="llama-label" id="llamaNavLabel">LLM offline</span>
+    </div>
   </div>
   <div class="nav-right">
     <input class="nav-input" id="repoUrl" type="text" placeholder="https://github.com/owner/repo" />
@@ -116,21 +198,53 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
       {% if data.has_results %}
         {{ data.total_issues }} issues detected
       {% else %}
-        No analysis results yet
+        No results yet — run an analysis to get started
       {% endif %}
     </div>
   </div>
 
+  <!-- LLAMA SERVER PANEL -->
+  <div class="llama-panel">
+    <div class="llama-panel-left">
+      <div class="llama-panel-icon">🤖</div>
+      <div>
+        <div class="llama-panel-title">llama.cpp Server — Qwen 2.5 Coder 14B</div>
+        <div class="llama-panel-sub" id="llamaPanelSub">
+          {% if data.llama_running %}
+            Running at http://127.0.0.1:8080 — LLM patches enabled
+          {% else %}
+            Not running — start the server to enable AI-powered patches
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="llama-panel-right">
+      <div class="server-badge {{ 'online' if data.llama_running else 'offline' }}" id="serverBadge">
+        {{ '● Running' if data.llama_running else '○ Offline' }}
+      </div>
+      {% if data.llama_running %}
+      <button class="btn-stop" id="llamaActionBtn" onclick="stopLlama()">Stop Server</button>
+      {% else %}
+      <button class="btn-start" id="llamaActionBtn" onclick="startLlama()">Start Server</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Llama log -->
+  <div class="log-box" id="llamaLog"></div>
+
   {% if not data.has_results %}
   <div class="empty">
-    <h2>Run your first analysis</h2>
-    <p>Enter a GitHub repository URL above and click Run,<br>or run the pipeline from your terminal first.</p>
+    <h2>No results yet</h2>
+    <p>Start the llama.cpp server above, enter a GitHub URL, and click Run.<br>
+    Or run from your terminal:</p>
     <code>python analyze_repo.py https://github.com/pallets/flask</code>
   </div>
 
   {% else %}
 
-  <div class="stats">
+  <!-- STATS -->
+  <div class="stats" style="margin-top:16px">
     <div class="stat">
       <div class="stat-label">Total Issues</div>
       <div class="stat-value">{{ data.total_issues }}</div>
@@ -164,38 +278,26 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
   </div>
 
   <div class="g3">
-
     <div class="card">
       <div class="card-head"><div class="card-title">Severity Breakdown</div></div>
       {% set tot = data.total_issues if data.total_issues > 0 else 1 %}
-      {% set sev_items = [
-        ('High',   '#ef4444', 'high'),
-        ('Medium', '#f59e0b', 'medium'),
-        ('Low',    '#22c55e', 'low')
-      ] %}
-      {% for label, color, key in sev_items %}
+      {% for label, color, key in [('High','#ef4444','high'),('Medium','#f59e0b','medium'),('Low','#22c55e','low')] %}
       {% set n = data.severity.get(key, 0) %}
       <div class="sev-item">
         <div class="sev-name" style="color:{{ color }}">{{ label }}</div>
-        <div class="sev-track">
-          <div class="sev-fill" style="width:{{ ((n / tot) * 100) | int }}%;background:{{ color }}"></div>
-        </div>
+        <div class="sev-track"><div class="sev-fill" style="width:{{ ((n/tot)*100)|int }}%;background:{{ color }}"></div></div>
         <div class="sev-count" style="color:{{ color }}">{{ n }}</div>
       </div>
       {% endfor %}
-      <div class="ch-sm" style="margin-top:14px">
-        <canvas id="sevChart"></canvas>
-      </div>
+      <div class="ch-sm" style="margin-top:14px"><canvas id="sevChart"></canvas></div>
     </div>
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">Issue Types</div>
-        <div class="badge">{{ data.issue_types | length }}</div>
+        <div class="badge">{{ data.issue_types|length }}</div>
       </div>
       <div class="ch"><canvas id="typeChart"></canvas></div>
     </div>
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">Top Files</div>
@@ -206,35 +308,30 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
       <div class="file-row">
         <div class="file-name">{{ fname }}</div>
         <div class="file-right">
-          <div class="mini-track">
-            <div class="mini-fill" style="width:{{ ((n / mx) * 100) | int }}%"></div>
-          </div>
+          <div class="mini-track"><div class="mini-fill" style="width:{{ ((n/mx)*100)|int }}%"></div></div>
           <div class="file-n">{{ n }}</div>
         </div>
       </div>
       {% endfor %}
     </div>
-
   </div>
 
   <div class="g2">
-
     <div class="card">
       <div class="card-head"><div class="card-title">Confidence Distribution</div></div>
       <div class="ch"><canvas id="confChart"></canvas></div>
     </div>
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">Codebase DNA</div>
         <div class="badge">5 patterns</div>
       </div>
       {% set dna_rows = [
-        ('Output Style',    2,  'logging',           False),
-        ('Docstrings',      65, 'docstrings',         False),
-        ('Type Hints',      93, 'type annotations',   True),
-        ('Error Handling',  46, 'custom exceptions',  False),
-        ('Naming',          64, 'snake_case',          False)
+        ('Output Style',   2,  'logging',           False),
+        ('Docstrings',     65, 'docstrings',         False),
+        ('Type Hints',     93, 'type annotations',   True),
+        ('Error Handling', 46, 'custom exceptions',  False),
+        ('Naming',         64, 'snake_case',          False)
       ] %}
       {% for label, pct, dom, ok in dna_rows %}
       <div class="dna-row">
@@ -249,11 +346,9 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
       </div>
       {% endfor %}
     </div>
-
   </div>
 
   <div class="g2">
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">Issues</div>
@@ -261,26 +356,23 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
       </div>
       <div class="issues-list">
         {% for iss in data.recent_issues %}
-        {% set c   = iss.get('confidence', 0) %}
-        {% set s   = iss.get('severity', 'low') %}
-        {% set dc  = '#ef4444' if s == 'high' else '#f59e0b' if s == 'medium' else '#22c55e' %}
-        {% set bg  = '#dcfce7' if c >= 0.80 else '#fef9c3' if c >= 0.60 else '#fee2e2' %}
-        {% set tc  = '#15803d' if c >= 0.80 else '#92400e' if c >= 0.60 else '#b91c1c' %}
+        {% set c = iss.get('confidence', 0) %}
+        {% set s = iss.get('severity', 'low') %}
+        {% set dc = '#ef4444' if s=='high' else '#f59e0b' if s=='medium' else '#22c55e' %}
+        {% set bg = '#dcfce7' if c>=0.80 else '#fef9c3' if c>=0.60 else '#fee2e2' %}
+        {% set tc = '#15803d' if c>=0.80 else '#92400e' if c>=0.60 else '#b91c1c' %}
         <div class="issue-row">
           <div class="issue-dot" style="background:{{ dc }}"></div>
           <div class="issue-body">
-            <div class="issue-type">{{ iss.get('type', '').replace('_', ' ') }}</div>
-            <div class="issue-fn">{{ iss.get('function', '') }}()</div>
-            <div class="issue-loc">{{ iss.get('file', '').split('/')[-1] }} · line {{ iss.get('line_number', '?') }}</div>
+            <div class="issue-type">{{ iss.get('type','').replace('_',' ') }}</div>
+            <div class="issue-fn">{{ iss.get('function','') }}()</div>
+            <div class="issue-loc">{{ iss.get('file','').split('/')[-1] }} · line {{ iss.get('line_number','?') }}</div>
           </div>
-          <div class="conf-pill" style="background:{{ bg }};color:{{ tc }}">
-            {{ (c * 100) | int }}%
-          </div>
+          <div class="conf-pill" style="background:{{ bg }};color:{{ tc }}">{{ (c*100)|int }}%</div>
         </div>
         {% endfor %}
       </div>
     </div>
-
     <div class="card">
       <div class="card-head">
         <div class="card-title">Patches</div>
@@ -288,35 +380,30 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
       </div>
       <div class="patches-list">
         {% for p in data.patches %}
-        {% set src    = p.get('patch_source', '') %}
+        {% set src = p.get('patch_source','') %}
         {% set is_llm = ('llm' in src) or ('llamacpp' in src) %}
         <div class="patch-row">
           <div class="patch-head">
-            <div class="patch-fn">{{ p.get('function', '') }}()</div>
-            <div class="source-pill {{ 'llm-pill' if is_llm else 'rule-pill' }}">
-              {{ 'LLM' if is_llm else 'Rule' }}
-            </div>
+            <div class="patch-fn">{{ p.get('function','') }}()</div>
+            <div class="source-pill {{ 'llm-pill' if is_llm else 'rule-pill' }}">{{ 'LLM' if is_llm else 'Rule' }}</div>
           </div>
-          <div class="patch-sub">
-            {{ p.get('issue_type', '').replace('_', ' ') }} ·
-            {{ p.get('file', '').split('/')[-1] }}
-          </div>
+          <div class="patch-sub">{{ p.get('issue_type','').replace('_',' ') }} · {{ p.get('file','').split('/')[-1] }}</div>
           {% if p.get('verification') %}
-          {% set v  = p['verification'] %}
-          {% set vc = '#15803d' if v.get('verified') == True else '#b91c1c' if v.get('verified') == False else '#71717a' %}
-          {% set vt = '✓ verified' if v.get('verified') == True else '✗ rejected' if v.get('verified') == False else '— unverified' %}
+          {% set v = p['verification'] %}
+          {% set vc = '#15803d' if v.get('verified')==True else '#b91c1c' if v.get('verified')==False else '#71717a' %}
+          {% set vt = '✓ verified' if v.get('verified')==True else '✗ rejected' if v.get('verified')==False else '— unverified' %}
           <div class="verify-tag" style="color:{{ vc }}">{{ vt }}</div>
           {% endif %}
         </div>
         {% endfor %}
       </div>
     </div>
-
   </div>
 
-  <div class="log-area" id="logBox"></div>
-
   {% endif %}
+
+  <!-- Analysis log -->
+  <div class="log-box" id="analysisLog"></div>
 
   <footer>
     AI Code Analyzer &nbsp;·&nbsp; FastAPI &nbsp;·&nbsp;
@@ -327,136 +414,186 @@ footer{padding-top:24px;border-top:1px solid #e4e4e7;margin-top:28px;text-align:
 
 <script>
 {% if data.has_results %}
-
 Chart.defaults.color = '#71717a';
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.font.size = 11;
 
-// Severity donut
 new Chart(document.getElementById('sevChart'), {
   type: 'doughnut',
   data: {
-    labels: ['High', 'Medium', 'Low'],
+    labels: ['High','Medium','Low'],
     datasets: [{
-      data: [
-        {{ data.severity.get('high', 0) }},
-        {{ data.severity.get('medium', 0) }},
-        {{ data.severity.get('low', 0) }}
-      ],
-      backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'],
-      borderWidth: 2,
-      borderColor: '#fff',
-      hoverOffset: 4
+      data: [{{ data.severity.get('high',0) }},{{ data.severity.get('medium',0) }},{{ data.severity.get('low',0) }}],
+      backgroundColor: ['#ef4444','#f59e0b','#22c55e'],
+      borderWidth: 2, borderColor: '#fff', hoverOffset: 4
     }]
   },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '65%',
-    plugins: {
-      legend: { position: 'right', labels: { boxWidth: 9, padding: 12 } }
-    }
+  options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+    plugins: { legend: { position: 'right', labels: { boxWidth: 9, padding: 12 } } }
   }
 });
 
-// Issue types horizontal bar
-const typeLabels = [];
-const typeValues = [];
+const typeL = [], typeV = [];
 {% for k, v in data.issue_types.items() %}
-typeLabels.push('{{ k.replace("_", " ") }}');
-typeValues.push({{ v }});
+typeL.push('{{ k.replace("_"," ") }}'); typeV.push({{ v }});
 {% endfor %}
-
 new Chart(document.getElementById('typeChart'), {
   type: 'bar',
-  data: {
-    labels: typeLabels,
-    datasets: [{
-      data: typeValues,
-      backgroundColor: '#3b82f6',
-      borderRadius: 4,
-      borderSkipped: false
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
+  data: { labels: typeL, datasets: [{ data: typeV, backgroundColor: '#3b82f6', borderRadius: 4, borderSkipped: false }] },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } },
-      y: { grid: { display: false }, ticks: { color: '#52525b' } }
-    }
+    scales: { x: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } }, y: { grid: { display: false }, ticks: { color: '#52525b' } } }
   }
 });
 
-// Confidence bar
-const confLabels = [];
-const confValues = [];
+const confL = [], confV = [];
 {% for k, v in data.conf_buckets.items() %}
-confLabels.push('{{ k }}');
-confValues.push({{ v }});
+confL.push('{{ k }}'); confV.push({{ v }});
 {% endfor %}
-
 new Chart(document.getElementById('confChart'), {
   type: 'bar',
-  data: {
-    labels: confLabels,
-    datasets: [{
-      data: confValues,
-      backgroundColor: ['#22c55e', '#86efac', '#f59e0b', '#ef4444'],
-      borderRadius: 5,
-      borderSkipped: false
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
+  data: { labels: confL, datasets: [{ data: confV, backgroundColor: ['#22c55e','#86efac','#f59e0b','#ef4444'], borderRadius: 5, borderSkipped: false }] },
+  options: { responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: '#a1a1aa' } },
-      y: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } }
-    }
+    scales: { x: { grid: { display: false }, ticks: { color: '#a1a1aa' } }, y: { grid: { color: '#f4f4f5' }, ticks: { color: '#a1a1aa' } } }
   }
 });
-
 {% endif %}
 
-let poll;
+// ── Llama server control ──────────────────────────────────────────
+let llamaPoll = null;
+let isLlamaRunning = {{ 'true' if data.llama_running else 'false' }};
+
+function updateLlamaUI(running, starting) {
+  const dot   = document.getElementById('llamaNavDot');
+  const label = document.getElementById('llamaNavLabel');
+  const badge = document.getElementById('serverBadge');
+  const btn   = document.getElementById('llamaActionBtn');
+  const sub   = document.getElementById('llamaPanelSub');
+
+  if (starting) {
+    dot.className = 'llama-dot starting';
+    label.textContent = 'LLM starting…';
+    badge.className = 'server-badge starting';
+    badge.textContent = '◌ Starting';
+    if (btn) { btn.textContent = 'Starting…'; btn.disabled = true; }
+    return;
+  }
+
+  if (running) {
+    dot.className = 'llama-dot on';
+    label.textContent = 'LLM online';
+    badge.className = 'server-badge online';
+    badge.textContent = '● Running';
+    if (btn) { btn.textContent = 'Stop Server'; btn.disabled = false; btn.onclick = stopLlama; btn.className = 'btn-stop'; }
+    if (sub) sub.textContent = 'Running at http://127.0.0.1:8080 — LLM patches enabled';
+  } else {
+    dot.className = 'llama-dot off';
+    label.textContent = 'LLM offline';
+    badge.className = 'server-badge offline';
+    badge.textContent = '○ Offline';
+    if (btn) { btn.textContent = 'Start Server'; btn.disabled = false; btn.onclick = startLlama; btn.className = 'btn-start'; }
+    if (sub) sub.textContent = 'Not running — start the server to enable AI-powered patches';
+  }
+
+  isLlamaRunning = running;
+}
+
+async function startLlama() {
+  document.getElementById('llamaLog').classList.add('on');
+  updateLlamaUI(false, true);
+
+  const r = await fetch('/api/llama/start', { method: 'POST' });
+  const d = await r.json();
+
+  if (d.status === 'already_running') {
+    updateLlamaUI(true, false);
+    return;
+  }
+
+  if (d.status === 'error') {
+    document.getElementById('llamaLog').innerHTML =
+      `<div class="ll w">✗ ${d.message}</div>`;
+    updateLlamaUI(false, false);
+    return;
+  }
+
+  llamaPoll = setInterval(pollLlama, 1500);
+}
+
+async function stopLlama() {
+  if (llamaPoll) { clearInterval(llamaPoll); llamaPoll = null; }
+  await fetch('/api/llama/stop', { method: 'POST' });
+  updateLlamaUI(false, false);
+}
+
+async function pollLlama() {
+  const r = await fetch('/api/llama/status');
+  const d = await r.json();
+
+  const box = document.getElementById('llamaLog');
+  box.innerHTML = d.log.map(l => {
+    const cls = l.includes('ready') || l.includes('✓') ? 'd' :
+                l.includes('✗') ? 'w' : '';
+    return `<div class="ll ${cls}">${l}</div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+
+  if (d.running) {
+    clearInterval(llamaPoll);
+    llamaPoll = null;
+    updateLlamaUI(true, false);
+  }
+}
+
+function toggleLlama() {
+  if (isLlamaRunning) stopLlama();
+  else startLlama();
+}
+
+// ── Analysis control ─────────────────────────────────────────────
+let analysisPoll = null;
 
 async function startAnalysis() {
   const url = document.getElementById('repoUrl').value.trim();
   if (!url) return;
   const btn = document.getElementById('runBtn');
-  btn.disabled = true;
-  btn.textContent = 'Running…';
-  document.getElementById('logBox').classList.add('on');
+  btn.disabled = true; btn.textContent = 'Running…';
+  document.getElementById('analysisLog').classList.add('on');
+
   const r = await fetch('/api/analyze?repo_url=' + encodeURIComponent(url), { method: 'POST' });
   const d = await r.json();
-  if (d.status === 'started') {
-    poll = setInterval(checkStatus, 1500);
-  } else {
-    btn.disabled = false;
-    btn.textContent = 'Run';
-  }
+
+  if (d.status === 'started') analysisPoll = setInterval(pollAnalysis, 1500);
+  else { btn.disabled = false; btn.textContent = 'Run'; }
 }
 
-async function checkStatus() {
+async function pollAnalysis() {
   const r = await fetch('/api/status');
   const d = await r.json();
-  const box = document.getElementById('logBox');
+
+  const box = document.getElementById('analysisLog');
   box.innerHTML = d.log.map(l => {
     const cls = l.includes('INFO') ? 'i' : l.includes('WARNING') ? 'w' : l.includes('complete') ? 'd' : '';
     return `<div class="ll ${cls}">${l}</div>`;
   }).join('');
   box.scrollTop = box.scrollHeight;
+
   if (!d.running) {
-    clearInterval(poll);
+    clearInterval(analysisPoll);
+    analysisPoll = null;
     document.getElementById('runBtn').disabled = false;
     document.getElementById('runBtn').textContent = 'Run';
     setTimeout(() => location.reload(), 1500);
   }
 }
+
+// Poll llama status every 5s to keep nav dot in sync
+setInterval(async () => {
+  const r = await fetch('/api/llama/status');
+  const d = await r.json();
+  if (!llamaPoll) updateLlamaUI(d.running, false);
+}, 5000);
 </script>
 </body>
 </html>
